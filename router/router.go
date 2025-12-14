@@ -5,25 +5,22 @@ package router
 import (
 	"net/http"
 
+	"github.com/gbart/fcabl-api/internal/handlers"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(h *handlers.Handler) *gin.Engine {
 	r := gin.Default()
 
-	// Define a simple GET endpoint
+	// Define API routes
 	r.GET("api/ping", func(c *gin.Context) {
-		// Return JSON response
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pongerino",
 		})
 	})
-	r.GET("api/users", func(c *gin.Context) {
-		// Return JSON response
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
+
+	// User routes using handlers
+	r.GET("api/users", h.HandleListUsers)
 
 	return r
 }
