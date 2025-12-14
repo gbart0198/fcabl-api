@@ -1,0 +1,11 @@
+FROM postgres:16-alpine
+
+ENV POSTGRES_USER={user}
+ENV POSTGRES_PASSWORD={pwd}
+ENV POSTGRES_DB={db_schema}
+
+COPY internal/repository/schema/001_initial_schema.sql /docker-entrypoint-initdb.d/01-schema.sql
+COPY seed_data.sql /docker-entrypoint-initdb.d/02-seed.sql
+
+EXPOSE 5432
+

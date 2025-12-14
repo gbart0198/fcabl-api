@@ -15,6 +15,12 @@ func SetupRouter() *gin.Engine {
 	r.GET("api/ping", func(c *gin.Context) {
 		// Return JSON response
 		c.JSON(http.StatusOK, gin.H{
+			"message": "pongerino",
+		})
+	})
+	r.GET("api/users", func(c *gin.Context) {
+		// Return JSON response
+		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
 		})
 	})

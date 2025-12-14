@@ -1,0 +1,51 @@
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output
+*.out
+
+# Go workspace
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!AGENTS.md
+
+# Docker
+docker-compose.yml
+Dockerfile*
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

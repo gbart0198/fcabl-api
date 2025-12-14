@@ -19,4 +19,8 @@ UPDATE users
 SET email = $1, phone_number = $2, first_name = $3, last_name = $4, role = $5, updated_at = $6
 WHERE id = $7;
 
+-- name: DeleteUser :exec
+DELETE FROM users
+where id = $1;
+
 
