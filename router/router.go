@@ -22,5 +22,7 @@ func SetupRouter(h *handlers.Handler) *gin.Engine {
 	// User routes using handlers
 	r.GET("api/users", h.HandleListUsers)
 
+	// TODO: SETUP MIDDLEWARE FOR CORS, etc.
+
 	return r
 }

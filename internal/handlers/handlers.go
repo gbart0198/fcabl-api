@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gbart/fcabl-api/internal/db"
-	repository "github.com/gbart/fcabl-api/internal/repository/sqlc_gen"
+	"github.com/gbart/fcabl-api/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
