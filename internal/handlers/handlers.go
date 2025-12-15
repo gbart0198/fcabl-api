@@ -4,12 +4,8 @@
 package handlers
 
 import (
-	"log/slog"
-	"net/http"
-
 	"github.com/gbart/fcabl-api/internal/db"
 	"github.com/gbart/fcabl-api/internal/repository"
-	"github.com/gin-gonic/gin"
 )
 
 // Handler holds dependencies for all HTTP handlers
@@ -22,20 +18,4 @@ func NewHandler(pg *db.Postgres) *Handler {
 	return &Handler{
 		queries: repository.New(pg.DB),
 	}
-}
-
-// HandleListUsers handles GET requests to list all users
-func (h *Handler) HandleListUsers(c *gin.Context) {
-	users, err := h.queries.ListUsers(c.Request.Context())
-	if err != nil {
-		slog.Error("Failed to fetch users", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to fetch users",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"users": users,
-	})
 }
