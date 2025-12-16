@@ -39,6 +39,7 @@ func (h *Handler) ListPlayers(c *gin.Context) {
 // Query parameters must be used, either id or userId.
 // Id will take precedence over userId.
 func (h *Handler) GetPlayer(c *gin.Context) {
+	// TODO: Update query object to pull back user information like name, email, etc.
 	playerIDStr := c.Query("id")
 	userIDStr := c.Query("userId")
 	slog.Info("Starting GetPlayer", "playerIdStr", playerIDStr, "userIdStr", userIDStr)

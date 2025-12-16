@@ -58,25 +58,13 @@ func SetupRouter(h *handlers.Handler) *gin.Engine {
 	r.GET("api/game/team", h.ListGamesByTeam)
 	r.GET("api/game/with-teams", h.GetGameWithTeams)
 	r.GET("api/game/list-with-teams", h.ListGamesWithTeams)
-	r.GET("api/game/with-result", h.GetGameWithResult)
-	r.GET("api/game/list-with-results", h.ListGamesWithResults)
 	r.GET("api/game/schedule", h.ListTeamSchedule)
 	r.GET("api/game", h.GetGame)
 	r.POST("api/game", h.CreateGame)
 	r.PUT("api/game", h.UpdateGame)
+	r.PUT("api/game/status", h.UpdateGameScoreAndStatus)
 	r.PATCH("api/game/time", h.UpdateGameTime)
 	r.DELETE("api/game/:id", h.DeleteGame)
-
-	// Game Result routes
-	r.GET("api/game-result/list", h.ListGameResults)
-	r.GET("api/game-result/with-teams", h.GetGameResultWithTeams)
-	r.GET("api/game-result/list-with-teams", h.ListGameResultsWithTeams)
-	r.GET("api/game-result/team", h.ListTeamGameResults)
-	r.GET("api/game-result/record", h.GetTeamRecord)
-	r.GET("api/game-result", h.GetGameResult)
-	r.POST("api/game-result", h.CreateGameResult)
-	r.PUT("api/game-result", h.UpdateGameResult)
-	r.DELETE("api/game-result/:id", h.DeleteGameResult)
 
 	// Payment routes
 	r.GET("api/payment/list", h.ListPayments)

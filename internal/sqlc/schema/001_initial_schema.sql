@@ -68,20 +68,11 @@ CREATE TABLE games (
     id BIGSERIAL PRIMARY KEY,
     home_team_id BIGINT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
     away_team_id BIGINT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+    home_score INT NOT NULL DEFAULT 0,
+    away_score INT NOT NULL DEFAULT 0,
     game_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    status TEXT NOT NULL CHECK (status IN ('scheduled', 'in_progress', 'completed')) DEFAULT 'scheduled',
     CONSTRAINT teams_cannot_be_same CHECK (home_team_id <> away_team_id)
-);
-
----------------------------------------------------
--- 6. GAME_RESULTS Table (Scores and Outcome)
----------------------------------------------------
-CREATE TABLE game_results (
-    id BIGSERIAL PRIMARY KEY,
-    game_id BIGINT UNIQUE NOT NULL REFERENCES games(id) ON DELETE CASCADE, -- 1:1 relationship with Game
-    home_score INT NOT NULL DEFAULT 0,
-    away_score INT NOT NULL DEFAULT 0,
-    winning_team_id BIGINT REFERENCES teams(id) ON DELETE SET NULL, 
-    recorded_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );

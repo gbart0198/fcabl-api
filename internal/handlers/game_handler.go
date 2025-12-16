@@ -303,72 +303,6 @@ func (h *Handler) ListGamesWithTeams(c *gin.Context) {
 	})
 }
 
-// GetGameWithResult handles GET requests for a game with result
-func (h *Handler) GetGameWithResult(c *gin.Context) {
-	gameIDStr := c.Query("id")
-	slog.Info("Starting GetGameWithResult", "gameIdStr", gameIDStr)
-
-	if gameIDStr == "" {
-		slog.Warn("Game ID is empty.")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Please provide a game id.",
-		})
-		return
-	}
-
-	gameID, err := strconv.ParseInt(gameIDStr, 10, 64)
-	if err != nil {
-		slog.Error("Failed to parse game id", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to parse game id. Please provide a valid id.",
-		})
-		return
-	}
-
-	game, err := h.queries.GetGameWithResult(c.Request.Context(), gameID)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			slog.Warn("No game found.")
-			c.JSON(http.StatusOK, gin.H{
-				"data": repository.GetGameWithResultRow{},
-			})
-		} else {
-			slog.Error("Error retrieving game with result", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Error retrieving game with result.",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": game,
-	})
-}
-
-// ListGamesWithResults handles GET requests to list all games with results
-func (h *Handler) ListGamesWithResults(c *gin.Context) {
-	games, err := h.queries.ListGamesWithResults(c.Request.Context())
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			slog.Warn("No games found.")
-			c.JSON(http.StatusOK, gin.H{
-				"data": []repository.ListGamesWithResultsRow{},
-			})
-		} else {
-			slog.Error("Failed to fetch games with results", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to fetch games with results",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": games,
-	})
-}
-
 // ListTeamSchedule handles GET requests to list a team's schedule
 func (h *Handler) ListTeamSchedule(c *gin.Context) {
 	teamIDStr := c.Query("teamId")
@@ -427,6 +361,28 @@ func (h *Handler) UpdateGameTime(c *gin.Context) {
 		slog.Error("Failed to update game time", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update game time.",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// UpdateGameScoreAndStatus handles PUT requests to update a game's score and status.
+func (h *Handler) UpdateGameScoreAndStatus(c *gin.Context) {
+	var updateGameScoreAndStatusRequest models.UpdateGameScoreAndStatusRequest
+	if err := c.ShouldBindJSON(&updateGameScoreAndStatusRequest); err != nil {
+		slog.Error("Failed to bind JSON", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid parameters for updating game score and status.",
+		})
+		return
+	}
+
+	if err := h.queries.UpdateGameScoreAndStatus(c.Request.Context(), updateGameScoreAndStatusRequest.IntoDBModel()); err != nil {
+		slog.Error("Failed to update game score and status", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update game score and status.",
 		})
 		return
 	}

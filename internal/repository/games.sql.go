@@ -14,7 +14,7 @@ import (
 const createGame = `-- name: CreateGame :one
 INSERT INTO games (home_team_id, away_team_id, game_time, created_at, updated_at)
 VALUES ($1, $2, $3, NOW(), NOW())
-RETURNING id, home_team_id, away_team_id, game_time, created_at, updated_at
+RETURNING id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status
 `
 
 type CreateGameParams struct {
@@ -27,7 +27,7 @@ type CreateGameParams struct {
 //
 //	INSERT INTO games (home_team_id, away_team_id, game_time, created_at, updated_at)
 //	VALUES ($1, $2, $3, NOW(), NOW())
-//	RETURNING id, home_team_id, away_team_id, game_time, created_at, updated_at
+//	RETURNING id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status
 func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (Game, error) {
 	row := q.db.QueryRow(ctx, createGame, arg.HomeTeamID, arg.AwayTeamID, arg.GameTime)
 	var i Game
@@ -35,9 +35,12 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (Game, e
 		&i.ID,
 		&i.HomeTeamID,
 		&i.AwayTeamID,
+		&i.HomeScore,
+		&i.AwayScore,
 		&i.GameTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Status,
 	)
 	return i, err
 }
@@ -57,12 +60,12 @@ func (q *Queries) DeleteGame(ctx context.Context, id int64) error {
 }
 
 const getGameById = `-- name: GetGameById :one
-SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games WHERE id = $1
+SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games WHERE id = $1
 `
 
 // GetGameById
 //
-//	SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games WHERE id = $1
+//	SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games WHERE id = $1
 func (q *Queries) GetGameById(ctx context.Context, id int64) (Game, error) {
 	row := q.db.QueryRow(ctx, getGameById, id)
 	var i Game
@@ -70,59 +73,18 @@ func (q *Queries) GetGameById(ctx context.Context, id int64) (Game, error) {
 		&i.ID,
 		&i.HomeTeamID,
 		&i.AwayTeamID,
-		&i.GameTime,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getGameWithResult = `-- name: GetGameWithResult :one
-SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at, gr.home_score, gr.away_score, gr.winning_team_id, gr.recorded_at
-FROM games g
-LEFT JOIN game_results gr ON g.id = gr.game_id
-WHERE g.id = $1
-`
-
-type GetGameWithResultRow struct {
-	ID            int64            `json:"id"`
-	HomeTeamID    int64            `json:"homeTeamId"`
-	AwayTeamID    int64            `json:"awayTeamId"`
-	GameTime      pgtype.Timestamp `json:"gameTime"`
-	CreatedAt     pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamp `json:"updatedAt"`
-	HomeScore     pgtype.Int4      `json:"homeScore"`
-	AwayScore     pgtype.Int4      `json:"awayScore"`
-	WinningTeamID pgtype.Int8      `json:"winningTeamId"`
-	RecordedAt    pgtype.Timestamp `json:"recordedAt"`
-}
-
-// GetGameWithResult
-//
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at, gr.home_score, gr.away_score, gr.winning_team_id, gr.recorded_at
-//	FROM games g
-//	LEFT JOIN game_results gr ON g.id = gr.game_id
-//	WHERE g.id = $1
-func (q *Queries) GetGameWithResult(ctx context.Context, id int64) (GetGameWithResultRow, error) {
-	row := q.db.QueryRow(ctx, getGameWithResult, id)
-	var i GetGameWithResultRow
-	err := row.Scan(
-		&i.ID,
-		&i.HomeTeamID,
-		&i.AwayTeamID,
-		&i.GameTime,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 		&i.HomeScore,
 		&i.AwayScore,
-		&i.WinningTeamID,
-		&i.RecordedAt,
+		&i.GameTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Status,
 	)
 	return i, err
 }
 
 const getGameWithTeams = `-- name: GetGameWithTeams :one
-SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at, 
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
        ht.name as home_team_name, ht.wins as home_team_wins, ht.losses as home_team_losses,
        at.name as away_team_name, at.wins as away_team_wins, at.losses as away_team_losses
 FROM games g
@@ -135,9 +97,12 @@ type GetGameWithTeamsRow struct {
 	ID             int64            `json:"id"`
 	HomeTeamID     int64            `json:"homeTeamId"`
 	AwayTeamID     int64            `json:"awayTeamId"`
+	HomeScore      int32            `json:"homeScore"`
+	AwayScore      int32            `json:"awayScore"`
 	GameTime       pgtype.Timestamp `json:"gameTime"`
 	CreatedAt      pgtype.Timestamp `json:"createdAt"`
 	UpdatedAt      pgtype.Timestamp `json:"updatedAt"`
+	Status         string           `json:"status"`
 	HomeTeamName   string           `json:"homeTeamName"`
 	HomeTeamWins   int32            `json:"homeTeamWins"`
 	HomeTeamLosses int32            `json:"homeTeamLosses"`
@@ -148,7 +113,7 @@ type GetGameWithTeamsRow struct {
 
 // GetGameWithTeams
 //
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at,
+//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
 //	       ht.name as home_team_name, ht.wins as home_team_wins, ht.losses as home_team_losses,
 //	       at.name as away_team_name, at.wins as away_team_wins, at.losses as away_team_losses
 //	FROM games g
@@ -162,9 +127,12 @@ func (q *Queries) GetGameWithTeams(ctx context.Context, id int64) (GetGameWithTe
 		&i.ID,
 		&i.HomeTeamID,
 		&i.AwayTeamID,
+		&i.HomeScore,
+		&i.AwayScore,
 		&i.GameTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Status,
 		&i.HomeTeamName,
 		&i.HomeTeamWins,
 		&i.HomeTeamLosses,
@@ -176,13 +144,13 @@ func (q *Queries) GetGameWithTeams(ctx context.Context, id int64) (GetGameWithTe
 }
 
 const listGames = `-- name: ListGames :many
-SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games
+SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
 ORDER BY game_time
 `
 
 // ListGames
 //
-//	SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games
+//	SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
 //	ORDER BY game_time
 func (q *Queries) ListGames(ctx context.Context) ([]Game, error) {
 	rows, err := q.db.Query(ctx, listGames)
@@ -197,9 +165,12 @@ func (q *Queries) ListGames(ctx context.Context) ([]Game, error) {
 			&i.ID,
 			&i.HomeTeamID,
 			&i.AwayTeamID,
+			&i.HomeScore,
+			&i.AwayScore,
 			&i.GameTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -212,14 +183,14 @@ func (q *Queries) ListGames(ctx context.Context) ([]Game, error) {
 }
 
 const listGamesByTeam = `-- name: ListGamesByTeam :many
-SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games
+SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
 WHERE home_team_id = $1 OR away_team_id = $1
 ORDER BY game_time
 `
 
 // ListGamesByTeam
 //
-//	SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games
+//	SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
 //	WHERE home_team_id = $1 OR away_team_id = $1
 //	ORDER BY game_time
 func (q *Queries) ListGamesByTeam(ctx context.Context, homeTeamID int64) ([]Game, error) {
@@ -235,78 +206,12 @@ func (q *Queries) ListGamesByTeam(ctx context.Context, homeTeamID int64) ([]Game
 			&i.ID,
 			&i.HomeTeamID,
 			&i.AwayTeamID,
-			&i.GameTime,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listGamesWithResults = `-- name: ListGamesWithResults :many
-SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at, 
-       ht.name as home_team_name,
-       at.name as away_team_name,
-       gr.home_score, gr.away_score, gr.winning_team_id
-FROM games g
-INNER JOIN teams ht ON g.home_team_id = ht.id
-INNER JOIN teams at ON g.away_team_id = at.id
-LEFT JOIN game_results gr ON g.id = gr.game_id
-ORDER BY g.game_time DESC
-`
-
-type ListGamesWithResultsRow struct {
-	ID            int64            `json:"id"`
-	HomeTeamID    int64            `json:"homeTeamId"`
-	AwayTeamID    int64            `json:"awayTeamId"`
-	GameTime      pgtype.Timestamp `json:"gameTime"`
-	CreatedAt     pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamp `json:"updatedAt"`
-	HomeTeamName  string           `json:"homeTeamName"`
-	AwayTeamName  string           `json:"awayTeamName"`
-	HomeScore     pgtype.Int4      `json:"homeScore"`
-	AwayScore     pgtype.Int4      `json:"awayScore"`
-	WinningTeamID pgtype.Int8      `json:"winningTeamId"`
-}
-
-// ListGamesWithResults
-//
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at,
-//	       ht.name as home_team_name,
-//	       at.name as away_team_name,
-//	       gr.home_score, gr.away_score, gr.winning_team_id
-//	FROM games g
-//	INNER JOIN teams ht ON g.home_team_id = ht.id
-//	INNER JOIN teams at ON g.away_team_id = at.id
-//	LEFT JOIN game_results gr ON g.id = gr.game_id
-//	ORDER BY g.game_time DESC
-func (q *Queries) ListGamesWithResults(ctx context.Context) ([]ListGamesWithResultsRow, error) {
-	rows, err := q.db.Query(ctx, listGamesWithResults)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListGamesWithResultsRow{}
-	for rows.Next() {
-		var i ListGamesWithResultsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.HomeTeamID,
-			&i.AwayTeamID,
-			&i.GameTime,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.HomeTeamName,
-			&i.AwayTeamName,
 			&i.HomeScore,
 			&i.AwayScore,
-			&i.WinningTeamID,
+			&i.GameTime,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -319,7 +224,7 @@ func (q *Queries) ListGamesWithResults(ctx context.Context) ([]ListGamesWithResu
 }
 
 const listGamesWithTeams = `-- name: ListGamesWithTeams :many
-SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at, 
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
        ht.name as home_team_name,
        at.name as away_team_name
 FROM games g
@@ -332,16 +237,19 @@ type ListGamesWithTeamsRow struct {
 	ID           int64            `json:"id"`
 	HomeTeamID   int64            `json:"homeTeamId"`
 	AwayTeamID   int64            `json:"awayTeamId"`
+	HomeScore    int32            `json:"homeScore"`
+	AwayScore    int32            `json:"awayScore"`
 	GameTime     pgtype.Timestamp `json:"gameTime"`
 	CreatedAt    pgtype.Timestamp `json:"createdAt"`
 	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
+	Status       string           `json:"status"`
 	HomeTeamName string           `json:"homeTeamName"`
 	AwayTeamName string           `json:"awayTeamName"`
 }
 
 // ListGamesWithTeams
 //
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at,
+//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
 //	       ht.name as home_team_name,
 //	       at.name as away_team_name
 //	FROM games g
@@ -361,9 +269,12 @@ func (q *Queries) ListGamesWithTeams(ctx context.Context) ([]ListGamesWithTeamsR
 			&i.ID,
 			&i.HomeTeamID,
 			&i.AwayTeamID,
+			&i.HomeScore,
+			&i.AwayScore,
 			&i.GameTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Status,
 			&i.HomeTeamName,
 			&i.AwayTeamName,
 		); err != nil {
@@ -378,14 +289,14 @@ func (q *Queries) ListGamesWithTeams(ctx context.Context) ([]ListGamesWithTeamsR
 }
 
 const listPastGames = `-- name: ListPastGames :many
-SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games
+SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
 WHERE game_time <= NOW()
 ORDER BY game_time DESC
 `
 
 // ListPastGames
 //
-//	SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games
+//	SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
 //	WHERE game_time <= NOW()
 //	ORDER BY game_time DESC
 func (q *Queries) ListPastGames(ctx context.Context) ([]Game, error) {
@@ -401,9 +312,12 @@ func (q *Queries) ListPastGames(ctx context.Context) ([]Game, error) {
 			&i.ID,
 			&i.HomeTeamID,
 			&i.AwayTeamID,
+			&i.HomeScore,
+			&i.AwayScore,
 			&i.GameTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -416,10 +330,10 @@ func (q *Queries) ListPastGames(ctx context.Context) ([]Game, error) {
 }
 
 const listTeamSchedule = `-- name: ListTeamSchedule :many
-SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at, 
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
        ht.name as home_team_name,
        at.name as away_team_name,
-       CASE 
+       CASE
            WHEN g.home_team_id = $1 THEN 'HOME'
            WHEN g.away_team_id = $1 THEN 'AWAY'
        END as team_location
@@ -434,9 +348,12 @@ type ListTeamScheduleRow struct {
 	ID           int64            `json:"id"`
 	HomeTeamID   int64            `json:"homeTeamId"`
 	AwayTeamID   int64            `json:"awayTeamId"`
+	HomeScore    int32            `json:"homeScore"`
+	AwayScore    int32            `json:"awayScore"`
 	GameTime     pgtype.Timestamp `json:"gameTime"`
 	CreatedAt    pgtype.Timestamp `json:"createdAt"`
 	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
+	Status       string           `json:"status"`
 	HomeTeamName string           `json:"homeTeamName"`
 	AwayTeamName string           `json:"awayTeamName"`
 	TeamLocation interface{}      `json:"teamLocation"`
@@ -444,7 +361,7 @@ type ListTeamScheduleRow struct {
 
 // ListTeamSchedule
 //
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.game_time, g.created_at, g.updated_at,
+//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
 //	       ht.name as home_team_name,
 //	       at.name as away_team_name,
 //	       CASE
@@ -469,9 +386,12 @@ func (q *Queries) ListTeamSchedule(ctx context.Context, homeTeamID int64) ([]Lis
 			&i.ID,
 			&i.HomeTeamID,
 			&i.AwayTeamID,
+			&i.HomeScore,
+			&i.AwayScore,
 			&i.GameTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Status,
 			&i.HomeTeamName,
 			&i.AwayTeamName,
 			&i.TeamLocation,
@@ -487,14 +407,14 @@ func (q *Queries) ListTeamSchedule(ctx context.Context, homeTeamID int64) ([]Lis
 }
 
 const listUpcomingGames = `-- name: ListUpcomingGames :many
-SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games
+SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
 WHERE game_time > NOW()
 ORDER BY game_time
 `
 
 // ListUpcomingGames
 //
-//	SELECT id, home_team_id, away_team_id, game_time, created_at, updated_at FROM games
+//	SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
 //	WHERE game_time > NOW()
 //	ORDER BY game_time
 func (q *Queries) ListUpcomingGames(ctx context.Context) ([]Game, error) {
@@ -510,9 +430,12 @@ func (q *Queries) ListUpcomingGames(ctx context.Context) ([]Game, error) {
 			&i.ID,
 			&i.HomeTeamID,
 			&i.AwayTeamID,
+			&i.HomeScore,
+			&i.AwayScore,
 			&i.GameTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -526,27 +449,61 @@ func (q *Queries) ListUpcomingGames(ctx context.Context) ([]Game, error) {
 
 const updateGame = `-- name: UpdateGame :exec
 UPDATE games
-SET home_team_id = $1, away_team_id = $2, game_time = $3, updated_at = NOW()
-WHERE id = $4
+SET home_team_id = $1, away_team_id = $2, game_time = $3, home_score = $4, away_score = $5, status = $6, updated_at = NOW()
+WHERE id = $7
 `
 
 type UpdateGameParams struct {
 	HomeTeamID int64            `json:"homeTeamId"`
 	AwayTeamID int64            `json:"awayTeamId"`
 	GameTime   pgtype.Timestamp `json:"gameTime"`
+	HomeScore  int32            `json:"homeScore"`
+	AwayScore  int32            `json:"awayScore"`
+	Status     string           `json:"status"`
 	ID         int64            `json:"id"`
 }
 
 // UpdateGame
 //
 //	UPDATE games
-//	SET home_team_id = $1, away_team_id = $2, game_time = $3, updated_at = NOW()
-//	WHERE id = $4
+//	SET home_team_id = $1, away_team_id = $2, game_time = $3, home_score = $4, away_score = $5, status = $6, updated_at = NOW()
+//	WHERE id = $7
 func (q *Queries) UpdateGame(ctx context.Context, arg UpdateGameParams) error {
 	_, err := q.db.Exec(ctx, updateGame,
 		arg.HomeTeamID,
 		arg.AwayTeamID,
 		arg.GameTime,
+		arg.HomeScore,
+		arg.AwayScore,
+		arg.Status,
+		arg.ID,
+	)
+	return err
+}
+
+const updateGameScoreAndStatus = `-- name: UpdateGameScoreAndStatus :exec
+UPDATE games
+SET home_score = $1, away_score = $2, status = $3, updated_at = NOW()
+WHERE id = $4
+`
+
+type UpdateGameScoreAndStatusParams struct {
+	HomeScore int32  `json:"homeScore"`
+	AwayScore int32  `json:"awayScore"`
+	Status    string `json:"status"`
+	ID        int64  `json:"id"`
+}
+
+// UpdateGameScoreAndStatus
+//
+//	UPDATE games
+//	SET home_score = $1, away_score = $2, status = $3, updated_at = NOW()
+//	WHERE id = $4
+func (q *Queries) UpdateGameScoreAndStatus(ctx context.Context, arg UpdateGameScoreAndStatusParams) error {
+	_, err := q.db.Exec(ctx, updateGameScoreAndStatus,
+		arg.HomeScore,
+		arg.AwayScore,
+		arg.Status,
 		arg.ID,
 	)
 	return err

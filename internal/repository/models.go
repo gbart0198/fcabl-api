@@ -12,18 +12,12 @@ type Game struct {
 	ID         int64            `json:"id"`
 	HomeTeamID int64            `json:"homeTeamId"`
 	AwayTeamID int64            `json:"awayTeamId"`
+	HomeScore  int32            `json:"homeScore"`
+	AwayScore  int32            `json:"awayScore"`
 	GameTime   pgtype.Timestamp `json:"gameTime"`
 	CreatedAt  pgtype.Timestamp `json:"createdAt"`
 	UpdatedAt  pgtype.Timestamp `json:"updatedAt"`
-}
-
-type GameResult struct {
-	ID            int64            `json:"id"`
-	GameID        int64            `json:"gameId"`
-	HomeScore     int32            `json:"homeScore"`
-	AwayScore     int32            `json:"awayScore"`
-	WinningTeamID pgtype.Int8      `json:"winningTeamId"`
-	RecordedAt    pgtype.Timestamp `json:"recordedAt"`
+	Status     string           `json:"status"`
 }
 
 type Payment struct {
