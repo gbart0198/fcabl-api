@@ -182,14 +182,20 @@ type UpdateGameRequest struct {
 	HomeTeamID int64            `json:"homeTeamId" binding:"required"`
 	AwayTeamID int64            `json:"awayTeamId" binding:"required"`
 	GameTime   pgtype.Timestamp `json:"gameTime" binding:"required"`
+	HomeScore  int32            `json:"homeScore" binding:"required"`
+	AwayScore  int32            `json:"awayScore" binding:"required"`
+	Status     string           `json:"status" binding:"required"`
 }
 
 func (rq *UpdateGameRequest) IntoDBModel() repository.UpdateGameParams {
 	return repository.UpdateGameParams{
-		ID:         rq.ID,
 		HomeTeamID: rq.HomeTeamID,
 		AwayTeamID: rq.AwayTeamID,
 		GameTime:   rq.GameTime,
+		HomeScore:  rq.HomeScore,
+		AwayScore:  rq.AwayScore,
+		Status:     rq.Status,
+		ID:         rq.ID,
 	}
 }
 
