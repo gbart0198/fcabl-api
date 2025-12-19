@@ -261,3 +261,56 @@ func (h *Handler) GetTeamWithPlayers(c *gin.Context) {
 		"data": players,
 	})
 }
+
+func (h *Handler) ListTeamsWithPlayers(c *gin.Context) {
+	slog.Info("Starting ListTeamsWithPlayers")
+
+	rows, err := h.queries.ListTeamsWithPlayers(c.Request.Context())
+	if err != nil {
+		slog.Error("Error retrieving teams with players", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error retrieving teams with players.",
+		})
+		return
+	}
+
+	teamMap := make(map[int64]*models.TeamWithPlayers)
+
+	for _, row := range rows {
+		// Check if team already exists in map
+		if _, exists := teamMap[row.ID]; !exists {
+			// Create new team entry
+			teamMap[row.ID] = &models.TeamWithPlayers{
+				ID:            row.ID,
+				Name:          row.Name,
+				Wins:          row.Wins,
+				Losses:        row.Losses,
+				Draws:         row.Draws,
+				PointsFor:     row.PointsFor,
+				PointsAgainst: row.PointsAgainst,
+				CreatedAt:     row.CreatedAt,
+				UpdatedAt:     row.UpdatedAt,
+				Players:       []models.PlayerSimpleDetails{},
+			}
+		}
+
+		// Add player to team's player list (only if player data exists)
+		if row.JerseyNumber.Valid {
+			teamMap[row.ID].Players = append(teamMap[row.ID].Players, models.PlayerSimpleDetails{
+				JerseyNumber: row.JerseyNumber,
+				FirstName:    row.FirstName.String,
+				LastName:     row.LastName.String,
+			})
+		}
+	}
+
+	// Convert map to slice
+	teams := make([]models.TeamWithPlayers, 0, len(teamMap))
+	for _, team := range teamMap {
+		teams = append(teams, *team)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": teams,
+	})
+}

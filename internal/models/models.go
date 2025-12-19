@@ -256,3 +256,22 @@ func (rq *UpdatePaymentStatusRequest) IntoDBModel() repository.UpdatePaymentStat
 		Status: rq.Status,
 	}
 }
+
+type TeamWithPlayers struct {
+	ID            int64                 `json:"id"`
+	Name          string                `json:"name"`
+	Wins          int32                 `json:"wins"`
+	Losses        int32                 `json:"losses"`
+	Draws         int32                 `json:"draws"`
+	PointsFor     int32                 `json:"pointsFor"`
+	PointsAgainst int32                 `json:"pointsAgainst"`
+	CreatedAt     pgtype.Timestamp      `json:"createdAt"`
+	UpdatedAt     pgtype.Timestamp      `json:"updatedAt"`
+	Players       []PlayerSimpleDetails `json:"players"`
+}
+
+type PlayerSimpleDetails struct {
+	JerseyNumber pgtype.Int4 `json:"jerseyNumber"`
+	FirstName    string      `json:"firstName"`
+	LastName     string      `json:"lastName"`
+}

@@ -21,14 +21,22 @@ DELETE FROM teams
 WHERE id = $1;
 
 -- name: GetTeamWithPlayers :many
-SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, 
+SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered,
        p.is_active, p.jersey_number, p.created_at, p.updated_at
 FROM players p
 WHERE p.team_id = $1
 ORDER BY p.id;
 
+-- name: ListTeamsWithPlayers :many
+SELECT t.id, t.name, t.wins, t.losses, t.draws, t.points_for, t.points_against, t.created_at, t.updated_at, p.jersey_number,
+u.first_name, u.last_name
+FROM teams t
+LEFT JOIN players p on t.id = p.team_id
+LEFT JOIN users u on u.id = p.user_id
+ORDER BY t.id;
+
 -- name: GetTeamStats :one
-SELECT t.*, 
+SELECT t.*,
        COUNT(p.id) as player_count
 FROM teams t
 LEFT JOIN players p ON p.team_id = t.id AND p.is_active = true

@@ -151,7 +151,7 @@ func (q *Queries) GetTeamStandings(ctx context.Context) ([]GetTeamStandingsRow, 
 }
 
 const getTeamStats = `-- name: GetTeamStats :one
-SELECT t.id, t.name, t.wins, t.losses, t.draws, t.points_for, t.points_against, t.created_at, t.updated_at, 
+SELECT t.id, t.name, t.wins, t.losses, t.draws, t.points_for, t.points_against, t.created_at, t.updated_at,
        COUNT(p.id) as player_count
 FROM teams t
 LEFT JOIN players p ON p.team_id = t.id AND p.is_active = true
@@ -199,7 +199,7 @@ func (q *Queries) GetTeamStats(ctx context.Context, id int64) (GetTeamStatsRow, 
 }
 
 const getTeamWithPlayers = `-- name: GetTeamWithPlayers :many
-SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, 
+SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered,
        p.is_active, p.jersey_number, p.created_at, p.updated_at
 FROM players p
 WHERE p.team_id = $1
@@ -271,6 +271,71 @@ func (q *Queries) ListTeams(ctx context.Context) ([]Team, error) {
 			&i.PointsAgainst,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTeamsWithPlayers = `-- name: ListTeamsWithPlayers :many
+SELECT t.id, t.name, t.wins, t.losses, t.draws, t.points_for, t.points_against, t.created_at, t.updated_at, p.jersey_number,
+u.first_name, u.last_name
+FROM teams t
+LEFT JOIN players p on t.id = p.team_id
+LEFT JOIN users u on u.id = p.user_id
+ORDER BY t.id
+`
+
+type ListTeamsWithPlayersRow struct {
+	ID            int64            `json:"id"`
+	Name          string           `json:"name"`
+	Wins          int32            `json:"wins"`
+	Losses        int32            `json:"losses"`
+	Draws         int32            `json:"draws"`
+	PointsFor     int32            `json:"pointsFor"`
+	PointsAgainst int32            `json:"pointsAgainst"`
+	CreatedAt     pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt     pgtype.Timestamp `json:"updatedAt"`
+	JerseyNumber  pgtype.Int4      `json:"jerseyNumber"`
+	FirstName     pgtype.Text      `json:"firstName"`
+	LastName      pgtype.Text      `json:"lastName"`
+}
+
+// ListTeamsWithPlayers
+//
+//	SELECT t.id, t.name, t.wins, t.losses, t.draws, t.points_for, t.points_against, t.created_at, t.updated_at, p.jersey_number,
+//	u.first_name, u.last_name
+//	FROM teams t
+//	LEFT JOIN players p on t.id = p.team_id
+//	LEFT JOIN users u on u.id = p.user_id
+//	ORDER BY t.id
+func (q *Queries) ListTeamsWithPlayers(ctx context.Context) ([]ListTeamsWithPlayersRow, error) {
+	rows, err := q.db.Query(ctx, listTeamsWithPlayers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListTeamsWithPlayersRow{}
+	for rows.Next() {
+		var i ListTeamsWithPlayersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Wins,
+			&i.Losses,
+			&i.Draws,
+			&i.PointsFor,
+			&i.PointsAgainst,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.JerseyNumber,
+			&i.FirstName,
+			&i.LastName,
 		); err != nil {
 			return nil, err
 		}

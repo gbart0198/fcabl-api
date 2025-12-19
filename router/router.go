@@ -6,11 +6,15 @@ import (
 	"net/http"
 
 	"github.com/gbart/fcabl-api/internal/handlers"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter(h *handlers.Handler) *gin.Engine {
 	r := gin.Default()
+
+	// TODO: Setup environment-based cors configuration
+	r.Use(cors.Default())
 
 	// Define API routes
 	r.GET("api/ping", func(c *gin.Context) {
@@ -32,6 +36,7 @@ func SetupRouter(h *handlers.Handler) *gin.Engine {
 	r.GET("api/team/stats", h.GetTeamStats)
 	r.GET("api/team/players", h.GetTeamWithPlayers)
 	r.GET("api/team", h.GetTeam)
+	r.GET("api/team/players/list", h.ListTeamsWithPlayers)
 	r.POST("api/team", h.CreateTeam)
 	r.PUT("api/team", h.UpdateTeam)
 	r.DELETE("api/team/:id", h.DeleteTeam)
