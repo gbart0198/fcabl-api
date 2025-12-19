@@ -44,7 +44,7 @@ WHERE t.id = $1
 GROUP BY t.id;
 
 -- name: GetTeamStandings :many
-SELECT id, name, wins, losses, draws, points_for, points_against,
+SELECT id, name, wins, losses, draws, points_for, points_against, created_at, updated_at,
        (wins * 3 + draws) as points,
        (points_for - points_against) as point_differential
 FROM teams

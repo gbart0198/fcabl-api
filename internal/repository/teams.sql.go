@@ -94,7 +94,7 @@ func (q *Queries) GetTeamById(ctx context.Context, id int64) (Team, error) {
 }
 
 const getTeamStandings = `-- name: GetTeamStandings :many
-SELECT id, name, wins, losses, draws, points_for, points_against,
+SELECT id, name, wins, losses, draws, points_for, points_against, created_at, updated_at,
        (wins * 3 + draws) as points,
        (points_for - points_against) as point_differential
 FROM teams
@@ -102,20 +102,22 @@ ORDER BY points DESC, point_differential DESC, name ASC
 `
 
 type GetTeamStandingsRow struct {
-	ID                int64  `json:"id"`
-	Name              string `json:"name"`
-	Wins              int32  `json:"wins"`
-	Losses            int32  `json:"losses"`
-	Draws             int32  `json:"draws"`
-	PointsFor         int32  `json:"pointsFor"`
-	PointsAgainst     int32  `json:"pointsAgainst"`
-	Points            int32  `json:"points"`
-	PointDifferential int32  `json:"pointDifferential"`
+	ID                int64            `json:"id"`
+	Name              string           `json:"name"`
+	Wins              int32            `json:"wins"`
+	Losses            int32            `json:"losses"`
+	Draws             int32            `json:"draws"`
+	PointsFor         int32            `json:"pointsFor"`
+	PointsAgainst     int32            `json:"pointsAgainst"`
+	CreatedAt         pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt         pgtype.Timestamp `json:"updatedAt"`
+	Points            int32            `json:"points"`
+	PointDifferential int32            `json:"pointDifferential"`
 }
 
 // GetTeamStandings
 //
-//	SELECT id, name, wins, losses, draws, points_for, points_against,
+//	SELECT id, name, wins, losses, draws, points_for, points_against, created_at, updated_at,
 //	       (wins * 3 + draws) as points,
 //	       (points_for - points_against) as point_differential
 //	FROM teams
@@ -137,6 +139,8 @@ func (q *Queries) GetTeamStandings(ctx context.Context) ([]GetTeamStandingsRow, 
 			&i.Draws,
 			&i.PointsFor,
 			&i.PointsAgainst,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.Points,
 			&i.PointDifferential,
 		); err != nil {
