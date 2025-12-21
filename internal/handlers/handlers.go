@@ -4,18 +4,24 @@
 package handlers
 
 import (
+	"github.com/gbart/fcabl-api/internal/auth"
+	"github.com/gbart/fcabl-api/internal/config"
 	"github.com/gbart/fcabl-api/internal/db"
 	"github.com/gbart/fcabl-api/internal/repository"
 )
 
 // Handler holds dependencies for all HTTP handlers
 type Handler struct {
-	queries *repository.Queries
+	queries    *repository.Queries
+	jwtService *auth.JWTService
+	config     *config.Config
 }
 
 // NewHandler creates a new Handler instance with the provided database connection
-func NewHandler(pg *db.Postgres) *Handler {
+func NewHandler(pg *db.Postgres, jwtService *auth.JWTService, cfg *config.Config) *Handler {
 	return &Handler{
-		queries: repository.New(pg.DB),
+		queries:    repository.New(pg.DB),
+		jwtService: jwtService,
+		config:     cfg,
 	}
 }

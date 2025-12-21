@@ -93,6 +93,32 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 	return i, err
 }
 
+const getUserByEmailWithPassword = `-- name: GetUserByEmailWithPassword :one
+SELECT id, email, phone_number, password_hash, first_name, last_name, role, created_at, updated_at
+FROM users WHERE email = $1
+`
+
+// GetUserByEmailWithPassword
+//
+//	SELECT id, email, phone_number, password_hash, first_name, last_name, role, created_at, updated_at
+//	FROM users WHERE email = $1
+func (q *Queries) GetUserByEmailWithPassword(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmailWithPassword, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.PasswordHash,
+		&i.FirstName,
+		&i.LastName,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserById = `-- name: GetUserById :one
 SELECT id, email, phone_number, first_name, last_name, role, created_at
 FROM users WHERE id = $1
@@ -207,5 +233,27 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.UpdatedAt,
 		arg.ID,
 	)
+	return err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE users
+SET password_hash = $1, updated_at = $2
+WHERE id = $3
+`
+
+type UpdateUserPasswordParams struct {
+	PasswordHash string           `json:"passwordHash"`
+	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
+	ID           int64            `json:"id"`
+}
+
+// UpdateUserPassword
+//
+//	UPDATE users
+//	SET password_hash = $1, updated_at = $2
+//	WHERE id = $3
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.PasswordHash, arg.UpdatedAt, arg.ID)
 	return err
 }

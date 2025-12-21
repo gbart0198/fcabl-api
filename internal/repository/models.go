@@ -20,6 +20,15 @@ type Game struct {
 	Status     string           `json:"status"`
 }
 
+type PasswordResetToken struct {
+	ID        int64            `json:"id"`
+	UserID    int64            `json:"userId"`
+	Token     string           `json:"token"`
+	ExpiresAt pgtype.Timestamp `json:"expiresAt"`
+	Used      bool             `json:"used"`
+	CreatedAt pgtype.Timestamp `json:"createdAt"`
+}
+
 type Payment struct {
 	ID          int64            `json:"id"`
 	PlayerID    int64            `json:"playerId"`

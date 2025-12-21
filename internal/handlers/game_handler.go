@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gbart/fcabl-api/internal/models"
 	"github.com/gbart/fcabl-api/internal/repository"
@@ -280,6 +282,21 @@ func (h *Handler) GetGameWithTeams(c *gin.Context) {
 	})
 }
 
+// GameWithDetailsResponse represents a game with full team and score details for frontend
+type GameWithDetailsResponse struct {
+	ID           string `json:"id"`
+	HomeTeamID   string `json:"homeTeamId"`
+	AwayTeamID   string `json:"awayTeamId"`
+	HomeTeamName string `json:"homeTeamName"`
+	AwayTeamName string `json:"awayTeamName"`
+	HomeScore    *int32 `json:"homeScore,omitempty"`
+	AwayScore    *int32 `json:"awayScore,omitempty"`
+	GameTime     string `json:"gameTime"`
+	Status       string `json:"status"`
+	CreatedAt    string `json:"createdAt"`
+	UpdatedAt    string `json:"updatedAt"`
+}
+
 // ListGamesWithTeams handles GET requests to list all games with team details
 func (h *Handler) ListGamesWithTeams(c *gin.Context) {
 	games, err := h.queries.ListGamesWithTeams(c.Request.Context())
@@ -287,7 +304,7 @@ func (h *Handler) ListGamesWithTeams(c *gin.Context) {
 		if err == pgx.ErrNoRows {
 			slog.Warn("No games found.")
 			c.JSON(http.StatusOK, gin.H{
-				"data": []repository.ListGamesWithTeamsRow{},
+				"data": []GameWithDetailsResponse{},
 			})
 		} else {
 			slog.Error("Failed to fetch games with teams", "error", err)
@@ -298,8 +315,40 @@ func (h *Handler) ListGamesWithTeams(c *gin.Context) {
 		return
 	}
 
+	// Transform the data to match frontend expectations
+	response := make([]GameWithDetailsResponse, len(games))
+	for i, game := range games {
+		// Determine status: "completed" if status is set, otherwise "scheduled"
+		status := "scheduled"
+		if game.Status == "completed" {
+			status = "completed"
+		}
+
+		// Only include scores if game is completed
+		var homeScore *int32
+		var awayScore *int32
+		if status == "completed" {
+			homeScore = &game.HomeScore
+			awayScore = &game.AwayScore
+		}
+
+		response[i] = GameWithDetailsResponse{
+			ID:           fmt.Sprintf("%d", game.ID),
+			HomeTeamID:   fmt.Sprintf("%d", game.HomeTeamID),
+			AwayTeamID:   fmt.Sprintf("%d", game.AwayTeamID),
+			HomeTeamName: game.HomeTeamName,
+			AwayTeamName: game.AwayTeamName,
+			HomeScore:    homeScore,
+			AwayScore:    awayScore,
+			GameTime:     game.GameTime.Time.Format(time.RFC3339),
+			Status:       status,
+			CreatedAt:    game.CreatedAt.Time.Format(time.RFC3339),
+			UpdatedAt:    game.UpdatedAt.Time.Format(time.RFC3339),
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"data": games,
+		"data": response,
 	})
 }
 
