@@ -120,12 +120,109 @@ INSERT INTO games (home_team_id, away_team_id, home_score, away_score, game_time
 (2, 6, 0, 0, '2024-12-27 18:00:00', 'scheduled', '2024-01-15 10:00:00', '2024-01-15 10:00:00'),
 (1, 5, 0, 0, '2025-01-03 18:00:00', 'scheduled', '2024-01-15 10:00:00', '2024-01-15 10:00:00');
 
+---------------------------------------------------
+-- 6. GAME_DETAILS (Player Scores Per Game)
+---------------------------------------------------
+-- Game 1: Thunder Strikers (1) 18 vs Lightning Bolts (2) 21
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(1, 1, 6),  -- John Smith (Thunder Strikers)
+(1, 2, 7),  -- Sarah Jones (Thunder Strikers)
+(1, 3, 5),  -- Mike Wilson (Thunder Strikers)
+(1, 4, 8),  -- Emily Brown (Lightning Bolts)
+(1, 5, 7),  -- David Lee (Lightning Bolts)
+(1, 6, 6);  -- Jessica Davis (Lightning Bolts)
+
+-- Game 2: Phoenix Rising (3) 14 vs Dragon Warriors (4) 12
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(2, 7, 8),  -- Chris Martin (Phoenix Rising)
+(2, 8, 6),  -- Amanda Taylor (Phoenix Rising)
+(2, 9, 6),  -- James Anderson (Dragon Warriors)
+(2, 10, 6); -- Lisa Thomas (Dragon Warriors)
+
+-- Game 3: Avalanche (5) 10 vs Wildcats (6) 15
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(3, 11, 5),  -- Robert Garcia (Avalanche)
+(3, 12, 5),  -- Michelle Rodriguez (Avalanche)
+(3, 13, 8),  -- Kevin Martinez (Wildcats)
+(3, 14, 7);  -- Nicole Hernandez (Wildcats)
+
+-- Game 4: Lightning Bolts (2) 24 vs Phoenix Rising (3) 18
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(4, 4, 9),   -- Emily Brown (Lightning Bolts)
+(4, 5, 8),   -- David Lee (Lightning Bolts)
+(4, 6, 7),   -- Jessica Davis (Lightning Bolts)
+(4, 7, 10),  -- Chris Martin (Phoenix Rising)
+(4, 8, 8);   -- Amanda Taylor (Phoenix Rising)
+
+-- Game 5: Dragon Warriors (4) 14 vs Avalanche (5) 14
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(5, 9, 7),   -- James Anderson (Dragon Warriors)
+(5, 10, 7),  -- Lisa Thomas (Dragon Warriors)
+(5, 11, 7),  -- Robert Garcia (Avalanche)
+(5, 12, 7);  -- Michelle Rodriguez (Avalanche)
+
+-- Game 6: Wildcats (6) 16 vs Thunder Strikers (1) 19
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(6, 13, 8),  -- Kevin Martinez (Wildcats)
+(6, 14, 8),  -- Nicole Hernandez (Wildcats)
+(6, 1, 7),   -- John Smith (Thunder Strikers)
+(6, 2, 6),   -- Sarah Jones (Thunder Strikers)
+(6, 3, 6);   -- Mike Wilson (Thunder Strikers)
+
+-- Game 7: Thunder Strikers (1) 21 vs Phoenix Rising (3) 17
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(7, 1, 8),   -- John Smith (Thunder Strikers)
+(7, 2, 7),   -- Sarah Jones (Thunder Strikers)
+(7, 3, 6),   -- Mike Wilson (Thunder Strikers)
+(7, 7, 9),   -- Chris Martin (Phoenix Rising)
+(7, 8, 8);   -- Amanda Taylor (Phoenix Rising)
+
+-- Game 8: Lightning Bolts (2) 22 vs Dragon Warriors (4) 15
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(8, 4, 8),   -- Emily Brown (Lightning Bolts)
+(8, 5, 7),   -- David Lee (Lightning Bolts)
+(8, 6, 7),   -- Jessica Davis (Lightning Bolts)
+(8, 9, 8),   -- James Anderson (Dragon Warriors)
+(8, 10, 7);  -- Lisa Thomas (Dragon Warriors)
+
+-- Game 9: Avalanche (5) 12 vs Thunder Strikers (1) 20
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(9, 11, 6),  -- Robert Garcia (Avalanche)
+(9, 12, 6),  -- Michelle Rodriguez (Avalanche)
+(9, 1, 7),   -- John Smith (Thunder Strikers)
+(9, 2, 7),   -- Sarah Jones (Thunder Strikers)
+(9, 3, 6);   -- Mike Wilson (Thunder Strikers)
+
+-- Game 10: Phoenix Rising (3) 19 vs Wildcats (6) 19
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(10, 7, 10),  -- Chris Martin (Phoenix Rising)
+(10, 8, 9),   -- Amanda Taylor (Phoenix Rising)
+(10, 13, 10), -- Kevin Martinez (Wildcats)
+(10, 14, 9);  -- Nicole Hernandez (Wildcats)
+
+-- Game 11: Dragon Warriors (4) 13 vs Thunder Strikers (1) 18
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(11, 9, 7),  -- James Anderson (Dragon Warriors)
+(11, 10, 6), -- Lisa Thomas (Dragon Warriors)
+(11, 1, 6),  -- John Smith (Thunder Strikers)
+(11, 2, 6),  -- Sarah Jones (Thunder Strikers)
+(11, 3, 6);  -- Mike Wilson (Thunder Strikers)
+
+-- Game 12: Lightning Bolts (2) 25 vs Avalanche (5) 18
+INSERT INTO game_details (game_id, player_id, score) VALUES
+(12, 4, 9),  -- Emily Brown (Lightning Bolts)
+(12, 5, 8),  -- David Lee (Lightning Bolts)
+(12, 6, 8),  -- Jessica Davis (Lightning Bolts)
+(12, 11, 9), -- Robert Garcia (Avalanche)
+(12, 12, 9); -- Michelle Rodriguez (Avalanche)
+
 -- Update sequence values to continue from the last inserted ID
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 SELECT setval('teams_id_seq', (SELECT MAX(id) FROM teams));
 SELECT setval('players_id_seq', (SELECT MAX(id) FROM players));
 SELECT setval('payments_id_seq', (SELECT MAX(id) FROM payments));
 SELECT setval('games_id_seq', (SELECT MAX(id) FROM games));
+SELECT setval('game_details_id_seq', (SELECT MAX(id) FROM game_details));
 
 -- Verify data insertion
 SELECT 'Users: ' || COUNT(*) FROM users;
@@ -133,3 +230,4 @@ SELECT 'Teams: ' || COUNT(*) FROM teams;
 SELECT 'Players: ' || COUNT(*) FROM players;
 SELECT 'Payments: ' || COUNT(*) FROM payments;
 SELECT 'Games: ' || COUNT(*) FROM games;
+SELECT 'Game Details: ' || COUNT(*) FROM game_details;

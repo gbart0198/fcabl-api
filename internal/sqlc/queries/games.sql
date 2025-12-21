@@ -21,9 +21,14 @@ WHERE game_time <= NOW()
 ORDER BY game_time DESC;
 
 -- name: ListGamesByTeam :many
-SELECT * FROM games
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status, 
+t_home.name home_name, t_away.name away_name
+FROM games g
+INNER JOIN teams t_home on t_home.id = g.home_team_id
+INNER JOIN teams t_away on t_away.id = g.away_team_id
 WHERE home_team_id = $1 OR away_team_id = $1
 ORDER BY game_time;
+
 
 -- name: UpdateGame :exec
 UPDATE games

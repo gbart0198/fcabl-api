@@ -183,25 +183,47 @@ func (q *Queries) ListGames(ctx context.Context) ([]Game, error) {
 }
 
 const listGamesByTeam = `-- name: ListGamesByTeam :many
-SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status, 
+t_home.name home_name, t_away.name away_name
+FROM games g
+INNER JOIN teams t_home on t_home.id = g.home_team_id
+INNER JOIN teams t_away on t_away.id = g.away_team_id
 WHERE home_team_id = $1 OR away_team_id = $1
 ORDER BY game_time
 `
 
+type ListGamesByTeamRow struct {
+	ID         int64            `json:"id"`
+	HomeTeamID int64            `json:"homeTeamId"`
+	AwayTeamID int64            `json:"awayTeamId"`
+	HomeScore  int32            `json:"homeScore"`
+	AwayScore  int32            `json:"awayScore"`
+	GameTime   pgtype.Timestamp `json:"gameTime"`
+	CreatedAt  pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt  pgtype.Timestamp `json:"updatedAt"`
+	Status     string           `json:"status"`
+	HomeName   string           `json:"homeName"`
+	AwayName   string           `json:"awayName"`
+}
+
 // ListGamesByTeam
 //
-//	SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
+//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
+//	t_home.name home_name, t_away.name away_name
+//	FROM games g
+//	INNER JOIN teams t_home on t_home.id = g.home_team_id
+//	INNER JOIN teams t_away on t_away.id = g.away_team_id
 //	WHERE home_team_id = $1 OR away_team_id = $1
 //	ORDER BY game_time
-func (q *Queries) ListGamesByTeam(ctx context.Context, homeTeamID int64) ([]Game, error) {
+func (q *Queries) ListGamesByTeam(ctx context.Context, homeTeamID int64) ([]ListGamesByTeamRow, error) {
 	rows, err := q.db.Query(ctx, listGamesByTeam, homeTeamID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Game{}
+	items := []ListGamesByTeamRow{}
 	for rows.Next() {
-		var i Game
+		var i ListGamesByTeamRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.HomeTeamID,
@@ -212,6 +234,8 @@ func (q *Queries) ListGamesByTeam(ctx context.Context, homeTeamID int64) ([]Game
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Status,
+			&i.HomeName,
+			&i.AwayName,
 		); err != nil {
 			return nil, err
 		}

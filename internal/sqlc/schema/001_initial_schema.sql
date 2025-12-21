@@ -76,3 +76,14 @@ CREATE TABLE games (
     status TEXT NOT NULL CHECK (status IN ('scheduled', 'in_progress', 'completed')) DEFAULT 'scheduled',
     CONSTRAINT teams_cannot_be_same CHECK (home_team_id <> away_team_id)
 );
+
+---------------------------------------------------
+-- 6. GAME_DETAILS Table (Player scores during game)
+---------------------------------------------------
+CREATE TABLE game_details (
+  id BIGSERIAL PRIMARY KEY,
+  game_id BIGINT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  player_id BIGINT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  score INT NOT NULL DEFAULT 0,
+  CONSTRAINT unique_score UNIQUE NULLS NOT DISTINCT (game_id, player_id, score)
+);

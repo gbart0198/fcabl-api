@@ -52,6 +52,11 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 	r.GET("/api/game/schedule", h.ListTeamSchedule)
 	r.GET("/api/game/list-with-teams", h.ListGamesWithTeams)
 	r.GET("/api/game", h.GetGame)
+	r.GET("/api/team/stats", h.GetTeamStats)
+	r.GET("/api/team/players", h.GetTeamWithPlayers)
+	r.GET("/api/team/players/list", h.ListTeamsWithPlayers)
+	r.GET("/api/game/with-teams", h.GetGameWithTeams)
+	r.GET("/api/game/team", h.ListGamesByTeam)
 
 	// Protected routes (require authentication)
 	protected := r.Group("/api")
@@ -71,9 +76,6 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 			admin.DELETE("/user/:id", h.DeleteUser)
 
 			// Team management
-			admin.GET("/team/stats", h.GetTeamStats)
-			admin.GET("/team/players", h.GetTeamWithPlayers)
-			admin.GET("/team/players/list", h.ListTeamsWithPlayers)
 			admin.POST("/team", h.CreateTeam)
 			admin.PUT("/team", h.UpdateTeam)
 			admin.DELETE("/team/:id", h.DeleteTeam)
@@ -94,8 +96,6 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 			admin.DELETE("/player/:id", h.DeletePlayer)
 
 			// Game management
-			admin.GET("/game/with-teams", h.GetGameWithTeams)
-			admin.GET("/game/team", h.ListGamesByTeam)
 			admin.POST("/game", h.CreateGame)
 			admin.PUT("/game", h.UpdateGame)
 			admin.PUT("/game/status", h.UpdateGameScoreAndStatus)

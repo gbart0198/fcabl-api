@@ -20,6 +20,13 @@ type Game struct {
 	Status     string           `json:"status"`
 }
 
+type GameDetail struct {
+	ID       int64 `json:"id"`
+	GameID   int64 `json:"gameId"`
+	PlayerID int64 `json:"playerId"`
+	Score    int32 `json:"score"`
+}
+
 type PasswordResetToken struct {
 	ID        int64            `json:"id"`
 	UserID    int64            `json:"userId"`
