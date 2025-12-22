@@ -275,3 +275,25 @@ type PlayerSimpleDetails struct {
 	FirstName    string      `json:"firstName"`
 	LastName     string      `json:"lastName"`
 }
+
+type GameWithDetails struct {
+	repository.ListGamesWithTeamsRow
+	HomePlayerStats []PlayerGameStats `json:"homePlayerStats"`
+	AwayPlayerStats []PlayerGameStats `json:"awayPlayerStats"`
+}
+
+func CreateGameWithDetails(game repository.ListGamesWithTeamsRow, homeStats []PlayerGameStats, awayStats []PlayerGameStats) GameWithDetails {
+	return GameWithDetails{
+		ListGamesWithTeamsRow: game,
+		HomePlayerStats:       homeStats,
+		AwayPlayerStats:       awayStats,
+	}
+}
+
+type PlayerGameStats struct {
+	PlayerID        int64       `json:"playerId"`
+	PlayerFirstName string      `json:"playerFirstName"`
+	PlayerLastName  string      `json:"playerLastName"`
+	Number          pgtype.Int4 `json:"number"`
+	Score           int32       `json:"score"`
+}

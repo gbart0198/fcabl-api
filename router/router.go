@@ -50,6 +50,7 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 	r.GET("/api/game/upcoming", h.ListUpcomingGames)
 	r.GET("/api/game/past", h.ListPastGames)
 	r.GET("/api/game/schedule", h.ListTeamSchedule)
+	r.GET("/api/game/schedule/list", h.ListAllSchedules)
 	r.GET("/api/game/list-with-teams", h.ListGamesWithTeams)
 	r.GET("/api/game", h.GetGame)
 	r.GET("/api/team/stats", h.GetTeamStats)

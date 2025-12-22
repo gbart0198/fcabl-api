@@ -259,8 +259,8 @@ ORDER BY g.game_time
 
 type ListGamesWithTeamsRow struct {
 	ID           int64            `json:"id"`
-	HomeTeamID   int64            `json:"homeTeamId"`
-	AwayTeamID   int64            `json:"awayTeamId"`
+	HomeTeamID   pgtype.Int8      `json:"homeTeamId"`
+	AwayTeamID   pgtype.Int8      `json:"awayTeamId"`
 	HomeScore    int32            `json:"homeScore"`
 	AwayScore    int32            `json:"awayScore"`
 	GameTime     pgtype.Timestamp `json:"gameTime"`
