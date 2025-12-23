@@ -2,3 +2,4 @@
 docker-compose.yml
 Dockerfile.db
 main
+.env
