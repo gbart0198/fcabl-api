@@ -248,7 +248,8 @@ func (q *Queries) ListGamesByTeam(ctx context.Context, homeTeamID int64) ([]List
 }
 
 const listGamesWithTeams = `-- name: ListGamesWithTeams :many
-SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, 
+       g.game_time, g.created_at, g.updated_at, g.status,
        ht.name as home_team_name,
        at.name as away_team_name
 FROM games g
@@ -259,8 +260,8 @@ ORDER BY g.game_time
 
 type ListGamesWithTeamsRow struct {
 	ID           int64            `json:"id"`
-	HomeTeamID   pgtype.Int8      `json:"homeTeamId"`
-	AwayTeamID   pgtype.Int8      `json:"awayTeamId"`
+	HomeTeamID   int64            `json:"homeTeamId"`
+	AwayTeamID   int64            `json:"awayTeamId"`
 	HomeScore    int32            `json:"homeScore"`
 	AwayScore    int32            `json:"awayScore"`
 	GameTime     pgtype.Timestamp `json:"gameTime"`
@@ -273,7 +274,8 @@ type ListGamesWithTeamsRow struct {
 
 // ListGamesWithTeams
 //
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
+//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score,
+//	       g.game_time, g.created_at, g.updated_at, g.status,
 //	       ht.name as home_team_name,
 //	       at.name as away_team_name
 //	FROM games g
@@ -354,13 +356,10 @@ func (q *Queries) ListPastGames(ctx context.Context) ([]Game, error) {
 }
 
 const listTeamSchedule = `-- name: ListTeamSchedule :many
-SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score,
+       g.game_time, g.created_at, g.updated_at, g.status,
        ht.name as home_team_name,
-       at.name as away_team_name,
-       CASE
-           WHEN g.home_team_id = $1 THEN 'HOME'
-           WHEN g.away_team_id = $1 THEN 'AWAY'
-       END as team_location
+       at.name as away_team_name
 FROM games g
 INNER JOIN teams ht ON g.home_team_id = ht.id
 INNER JOIN teams at ON g.away_team_id = at.id
@@ -380,18 +379,14 @@ type ListTeamScheduleRow struct {
 	Status       string           `json:"status"`
 	HomeTeamName string           `json:"homeTeamName"`
 	AwayTeamName string           `json:"awayTeamName"`
-	TeamLocation interface{}      `json:"teamLocation"`
 }
 
 // ListTeamSchedule
 //
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
+//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score,
+//	       g.game_time, g.created_at, g.updated_at, g.status,
 //	       ht.name as home_team_name,
-//	       at.name as away_team_name,
-//	       CASE
-//	           WHEN g.home_team_id = $1 THEN 'HOME'
-//	           WHEN g.away_team_id = $1 THEN 'AWAY'
-//	       END as team_location
+//	       at.name as away_team_name
 //	FROM games g
 //	INNER JOIN teams ht ON g.home_team_id = ht.id
 //	INNER JOIN teams at ON g.away_team_id = at.id
@@ -418,7 +413,6 @@ func (q *Queries) ListTeamSchedule(ctx context.Context, homeTeamID int64) ([]Lis
 			&i.Status,
 			&i.HomeTeamName,
 			&i.AwayTeamName,
-			&i.TeamLocation,
 		); err != nil {
 			return nil, err
 		}

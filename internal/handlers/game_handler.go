@@ -375,6 +375,15 @@ func (h *Handler) ListTeamSchedule(c *gin.Context) {
 		return
 	}
 
+	gameDetails, err := h.queries.ListGameDetailsVerbose(c.Request.Context())
+	if err != nil {
+		slog.Error("Failed to fetch schedules", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch schedules",
+		})
+		return
+	}
+
 	schedule, err := h.queries.ListTeamSchedule(c.Request.Context(), teamID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -391,8 +400,46 @@ func (h *Handler) ListTeamSchedule(c *gin.Context) {
 		return
 	}
 
+	var games []models.GameWithDetails
+
+	for _, game := range schedule {
+		// something like this:
+		// game_details where game_id = x and team_id = y
+		homeStats := slices.Collect(func(yield func(models.PlayerGameStats) bool) {
+			for _, detail := range gameDetails {
+				if detail.GameID == game.ID && game.HomeTeamID == detail.TeamID {
+					if !yield(models.PlayerGameStats{
+						PlayerID:        detail.PlayerID,
+						PlayerFirstName: detail.FirstName,
+						PlayerLastName:  detail.LastName,
+						Number:          detail.JerseyNumber,
+						Score:           detail.Score,
+					}) {
+						return
+					}
+				}
+			}
+		})
+		awayStats := slices.Collect(func(yield func(models.PlayerGameStats) bool) {
+			for _, detail := range gameDetails {
+				if detail.GameID == game.ID && game.AwayTeamID == detail.TeamID {
+					if !yield(models.PlayerGameStats{
+						PlayerID:        detail.PlayerID,
+						PlayerFirstName: detail.FirstName,
+						PlayerLastName:  detail.LastName,
+						Number:          detail.JerseyNumber,
+						Score:           detail.Score,
+					}) {
+						return
+					}
+				}
+			}
+		})
+		games = append(games, models.CreateGameWithDetails(game, homeStats, awayStats))
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"data": schedule,
+		"data": games,
 	})
 }
 
@@ -422,7 +469,7 @@ func (h *Handler) ListAllSchedules(c *gin.Context) {
 		// game_details where game_id = x and team_id = y
 		homeStats := slices.Collect(func(yield func(models.PlayerGameStats) bool) {
 			for _, detail := range gameDetails {
-				if detail.GameID == game.ID && detail.TeamID == game.HomeTeamID {
+				if detail.GameID == game.ID && game.HomeTeamID == detail.TeamID {
 					if !yield(models.PlayerGameStats{
 						PlayerID:        detail.PlayerID,
 						PlayerFirstName: detail.FirstName,
@@ -437,7 +484,7 @@ func (h *Handler) ListAllSchedules(c *gin.Context) {
 		})
 		awayStats := slices.Collect(func(yield func(models.PlayerGameStats) bool) {
 			for _, detail := range gameDetails {
-				if detail.GameID == game.ID && detail.TeamID == game.AwayTeamID {
+				if detail.GameID == game.ID && game.AwayTeamID == detail.TeamID {
 					if !yield(models.PlayerGameStats{
 						PlayerID:        detail.PlayerID,
 						PlayerFirstName: detail.FirstName,

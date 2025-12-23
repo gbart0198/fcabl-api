@@ -282,9 +282,23 @@ type GameWithDetails struct {
 	AwayPlayerStats []PlayerGameStats `json:"awayPlayerStats"`
 }
 
-func CreateGameWithDetails(game repository.ListGamesWithTeamsRow, homeStats []PlayerGameStats, awayStats []PlayerGameStats) GameWithDetails {
+func CreateGameWithDetails[T repository.ListGamesWithTeamsRow | repository.ListTeamScheduleRow](
+	game T,
+	homeStats []PlayerGameStats,
+	awayStats []PlayerGameStats,
+) GameWithDetails {
+	var g any = game
+
+	var gameRow repository.ListGamesWithTeamsRow
+	switch v := g.(type) {
+	case repository.ListGamesWithTeamsRow:
+		gameRow = v
+	case repository.ListTeamScheduleRow:
+		gameRow = repository.ListGamesWithTeamsRow(v)
+	}
+
 	return GameWithDetails{
-		ListGamesWithTeamsRow: game,
+		ListGamesWithTeamsRow: gameRow,
 		HomePlayerStats:       homeStats,
 		AwayPlayerStats:       awayStats,
 	}

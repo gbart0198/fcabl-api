@@ -268,7 +268,7 @@ order by game_id, team_id
 type ListGameDetailsVerboseRow struct {
 	PlayerID     int64       `json:"playerId"`
 	GameID       int64       `json:"gameId"`
-	TeamID       pgtype.Int8 `json:"teamId"`
+	TeamID       int64       `json:"teamId"`
 	FirstName    string      `json:"firstName"`
 	LastName     string      `json:"lastName"`
 	JerseyNumber pgtype.Int4 `json:"jerseyNumber"`

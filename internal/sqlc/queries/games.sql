@@ -59,7 +59,8 @@ INNER JOIN teams at ON g.away_team_id = at.id
 WHERE g.id = $1;
 
 -- name: ListGamesWithTeams :many
-SELECT g.*,
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, 
+       g.game_time, g.created_at, g.updated_at, g.status,
        ht.name as home_team_name,
        at.name as away_team_name
 FROM games g
@@ -68,13 +69,10 @@ INNER JOIN teams at ON g.away_team_id = at.id
 ORDER BY g.game_time;
 
 -- name: ListTeamSchedule :many
-SELECT g.*,
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score,
+       g.game_time, g.created_at, g.updated_at, g.status,
        ht.name as home_team_name,
-       at.name as away_team_name,
-       CASE
-           WHEN g.home_team_id = $1 THEN 'HOME'
-           WHEN g.away_team_id = $1 THEN 'AWAY'
-       END as team_location
+       at.name as away_team_name
 FROM games g
 INNER JOIN teams ht ON g.home_team_id = ht.id
 INNER JOIN teams at ON g.away_team_id = at.id
