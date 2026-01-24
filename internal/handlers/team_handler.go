@@ -89,7 +89,7 @@ func (h *Handler) CreateTeam(c *gin.Context) {
 		return
 	}
 
-	newTeam, err := h.queries.CreateTeam(c.Request.Context(), createTeamRequest.IntoDBModel())
+	newTeam, err := h.queries.CreateTeam(c.Request.Context(), createTeamRequest.Name)
 	if err != nil {
 		slog.Error("Failed to create team", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -114,7 +114,8 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 		return
 	}
 
-	if err := h.queries.UpdateTeam(c.Request.Context(), updateTeamRequest.IntoDBModel()); err != nil {
+
+	if err := h.queries.UpdateTeamName(c.Request.Context(), updateTeamRequest.IntoDBModel()); err != nil {
 		slog.Error("Failed to update team", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update team.",
@@ -313,4 +314,26 @@ func (h *Handler) ListTeamsWithPlayers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": teams,
 	})
+}
+
+func getTeamIdFromParams(c *gin.Context) (int, error) {
+	teamIDStr := c.Query("id")
+	slog.Info("Starting GetTeamWithPlayers", "teamIdStr", teamIDStr)
+
+	if teamIDStr == "" {
+		slog.Warn("Team ID is empty.")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Please provide a team id.",
+		})
+		return ()
+	}
+
+	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
+	if err != nil {
+		slog.Error("Failed to parse team id", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to parse team id. Please provide a valid id.",
+		})
+		return
+	}
 }

@@ -29,73 +29,56 @@ INSERT INTO users (email, phone_number, password_hash, first_name, last_name, ro
 ---------------------------------------------------
 -- 2. TEAMS (League Competitors)
 ---------------------------------------------------
-INSERT INTO teams (name, wins, losses, draws, points_for, points_against, created_at, updated_at) VALUES
-('Thunder Strikers', 5, 2, 1, 145, 98, '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
-('Lightning Bolts', 6, 1, 1, 168, 87, '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
-('Phoenix Rising', 4, 3, 1, 132, 115, '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
-('Dragon Warriors', 3, 4, 1, 110, 128, '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
-('Avalanche', 2, 5, 1, 95, 145, '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
-('Wildcats', 4, 3, 1, 128, 120, '2024-01-01 12:00:00', '2024-12-01 18:00:00');
+INSERT INTO teams (name, created_at, updated_at) VALUES
+('Thunder Strikers', '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
+('Lightning Bolts', '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
+('Phoenix Rising', '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
+('Dragon Warriors', '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
+('Avalanche', '2024-01-01 12:00:00', '2024-12-01 18:00:00'),
+('Wildcats', '2024-01-01 12:00:00', '2024-12-01 18:00:00');
 
 ---------------------------------------------------
 -- 3. PLAYERS (League Participants)
 ---------------------------------------------------
--- Admin is not a player (just site admin)
--- Users 2-16 are players, some fully registered, some pending
-INSERT INTO players (user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at) VALUES
-(2, 1, 0.00, TRUE, TRUE, 7, '2024-01-05 09:45:00', '2024-01-15 10:00:00'),
-(3, 1, 0.00, TRUE, TRUE, 12, '2024-01-05 10:30:00', '2024-01-15 10:00:00'),
-(4, 1, 50.00, FALSE, TRUE, NULL, '2024-01-06 11:30:00', '2024-01-06 11:30:00'),
-(5, 2, 0.00, TRUE, TRUE, 23, '2024-01-06 15:00:00', '2024-01-15 10:00:00'),
-(6, 2, 0.00, TRUE, TRUE, 5, '2024-01-07 08:15:00', '2024-01-15 10:00:00'),
-(7, 2, 25.00, FALSE, TRUE, NULL, '2024-01-07 09:45:00', '2024-01-07 09:45:00'),
-(8, 3, 0.00, TRUE, TRUE, 18, '2024-01-08 10:15:00', '2024-01-15 10:00:00'),
-(9, 3, 0.00, TRUE, TRUE, 9, '2024-01-08 11:30:00', '2024-01-15 10:00:00'),
-(10, 4, 0.00, TRUE, TRUE, 14, '2024-01-09 13:15:00', '2024-01-15 10:00:00'),
-(11, 4, 75.00, FALSE, TRUE, NULL, '2024-01-09 14:45:00', '2024-01-09 14:45:00'),
-(12, 5, 0.00, TRUE, TRUE, 3, '2024-01-10 09:15:00', '2024-01-15 10:00:00'),
-(13, 5, 0.00, TRUE, TRUE, 21, '2024-01-10 11:00:00', '2024-01-15 10:00:00'),
-(14, 6, 0.00, TRUE, TRUE, 10, '2024-01-11 08:45:00', '2024-01-15 10:00:00'),
-(15, 6, 100.00, FALSE, TRUE, NULL, '2024-01-11 11:15:00', '2024-01-11 11:15:00'),
-(16, NULL, 150.00, FALSE, TRUE, NULL, '2024-01-12 09:30:00', '2024-01-12 09:30:00');
+INSERT INTO players (user_id, team_id, fee_remainder, jersey_number, created_at, updated_at) VALUES
+(2, 1, 2500, 7, '2024-01-05 09:45:00', '2024-01-15 10:00:00'),
+(3, 1, 2500, 12, '2024-01-05 10:30:00', '2024-01-15 10:00:00'),
+(4, 1, 2500, NULL, '2024-01-06 11:30:00', '2024-01-06 11:30:00'),
+(5, 2, 2500, 23, '2024-01-06 15:00:00', '2024-01-15 10:00:00'),
+(6, 2, 2500, 5, '2024-01-07 08:15:00', '2024-01-15 10:00:00'),
+(7, 2, 2500, NULL, '2024-01-07 09:45:00', '2024-01-07 09:45:00'),
+(8, 3, 2500, 18, '2024-01-08 10:15:00', '2024-01-15 10:00:00'),
+(9, 3, 2500, 9, '2024-01-08 11:30:00', '2024-01-15 10:00:00'),
+(10, 4, 2500, 14, '2024-01-09 13:15:00', '2024-01-15 10:00:00'),
+(11, 4, 2500, NULL, '2024-01-09 14:45:00', '2024-01-09 14:45:00'),
+(12, 5, 2500, 3, '2024-01-10 09:15:00', '2024-01-15 10:00:00'),
+(13, 5, 2500, 21, '2024-01-10 11:00:00', '2024-01-15 10:00:00'),
+(14, 6, 2500, 10, '2024-01-11 08:45:00', '2024-01-15 10:00:00'),
+(15, 6, 2500, NULL, '2024-01-11 11:15:00', '2024-01-11 11:15:00'),
+(16, NULL, 2500, NULL, '2024-01-12 09:30:00', '2024-01-12 09:30:00');
 
 ---------------------------------------------------
 -- 4. PAYMENTS (Transaction Records)
 ---------------------------------------------------
 -- Payments for fully registered players
-INSERT INTO payments (player_id, stripe_id, amount, status, payment_date) VALUES
--- Player 1 (user 2) - John Smith
-(1, 'pi_3ABC123DEF456GHI789', 150.00, 'completed', '2024-01-10 14:30:00'),
--- Player 2 (user 3) - Sarah Jones
-(2, 'pi_3ABC123DEF456GHI790', 150.00, 'completed', '2024-01-11 09:15:00'),
--- Player 3 (user 4) - Mike Wilson (partial payment)
-(3, 'pi_3ABC123DEF456GHI791', 100.00, 'completed', '2024-01-12 11:00:00'),
--- Player 4 (user 5) - Emily Brown
-(4, 'pi_3ABC123DEF456GHI792', 150.00, 'completed', '2024-01-13 10:45:00'),
--- Player 5 (user 6) - David Lee
-(5, 'pi_3ABC123DEF456GHI793', 150.00, 'completed', '2024-01-14 15:20:00'),
--- Player 6 (user 7) - Jessica Davis (partial payment)
-(6, 'pi_3ABC123DEF456GHI794', 125.00, 'completed', '2024-01-15 08:30:00'),
--- Player 7 (user 8) - Chris Martin
-(7, 'pi_3ABC123DEF456GHI795', 150.00, 'completed', '2024-01-16 13:00:00'),
--- Player 8 (user 9) - Amanda Taylor
-(8, 'pi_3ABC123DEF456GHI796', 150.00, 'completed', '2024-01-17 10:00:00'),
--- Player 9 (user 10) - James Anderson
-(9, 'pi_3ABC123DEF456GHI797', 150.00, 'completed', '2024-01-18 11:30:00'),
--- Player 10 (user 11) - Lisa Thomas (partial payment)
-(10, 'pi_3ABC123DEF456GHI798', 75.00, 'completed', '2024-01-19 09:45:00'),
--- Player 11 (user 12) - Robert Garcia
-(11, 'pi_3ABC123DEF456GHI799', 150.00, 'completed', '2024-01-20 14:15:00'),
--- Player 12 (user 13) - Michelle Rodriguez
-(12, 'pi_3ABC123DEF456GHI800', 150.00, 'completed', '2024-01-21 10:30:00'),
--- Player 13 (user 14) - Kevin Martinez
-(13, 'pi_3ABC123DEF456GHI801', 150.00, 'completed', '2024-01-22 12:00:00'),
--- Player 14 (user 15) - Nicole Hernandez (partial payment)
-(14, 'pi_3ABC123DEF456GHI802', 50.00, 'completed', '2024-01-23 08:45:00'),
--- Some pending/failed payments
-(3, 'pi_3ABC123DEF456GHI803', 50.00, 'pending', '2024-12-01 10:00:00'),
-(6, 'pi_3ABC123DEF456GHI804', 25.00, 'pending', '2024-12-02 14:30:00'),
-(15, 'pi_3ABC123DEF456GHI805', 100.00, 'failed', '2024-11-28 16:20:00');
+INSERT INTO payments (player_id, transaction_id, amount, status, payment_date) VALUES
+(1, 'pi_3ABC123DEF456GHI789', 15000, 'completed', '2024-01-10 14:30:00'),
+(2, 'pi_3ABC123DEF456GHI790', 15000, 'completed', '2024-01-11 09:15:00'),
+(3, 'pi_3ABC123DEF456GHI791', 10000, 'completed', '2024-01-12 11:00:00'),
+(4, 'pi_3ABC123DEF456GHI792', 15000, 'completed', '2024-01-13 10:45:00'),
+(5, 'pi_3ABC123DEF456GHI793', 15000, 'completed', '2024-01-14 15:20:00'),
+(6, 'pi_3ABC123DEF456GHI794', 12500, 'completed', '2024-01-15 08:30:00'),
+(7, 'pi_3ABC123DEF456GHI795', 15000, 'completed', '2024-01-16 13:00:00'),
+(8, 'pi_3ABC123DEF456GHI796', 15000, 'completed', '2024-01-17 10:00:00'),
+(9, 'pi_3ABC123DEF456GHI797', 15000, 'completed', '2024-01-18 11:30:00'),
+(10, 'pi_3ABC123DEF456GHI798', 7500, 'completed', '2024-01-19 09:45:00'),
+(11, 'pi_3ABC123DEF456GHI799', 15000, 'completed', '2024-01-20 14:15:00'),
+(12, 'pi_3ABC123DEF456GHI800', 15000, 'completed', '2024-01-21 10:30:00'),
+(13, 'pi_3ABC123DEF456GHI801', 15000, 'completed', '2024-01-22 12:00:00'),
+(14, 'pi_3ABC123DEF456GHI802', 5000, 'completed', '2024-01-23 08:45:00'),
+(3, 'pi_3ABC123DEF456GHI803', 5000, 'pending', '2024-12-01 10:00:00'),
+(6, 'pi_3ABC123DEF456GHI804', 2500, 'pending', '2024-12-02 14:30:00'),
+(15, 'pi_3ABC123DEF456GHI805', 10000, 'failed', '2024-11-28 16:20:00');
 
 ---------------------------------------------------
 -- 5. GAMES (Scheduled Matchups with Scores)

@@ -12,27 +12,27 @@ import (
 )
 
 const createPayment = `-- name: CreatePayment :one
-INSERT INTO payments (player_id, stripe_id, amount, status, payment_date)
+INSERT INTO payments (player_id, transaction_id, amount, status, payment_date)
 VALUES ($1, $2, $3, $4, NOW())
-RETURNING id, player_id, stripe_id, amount, status, payment_date
+RETURNING id, player_id, transaction_id, amount, status, payment_date
 `
 
 type CreatePaymentParams struct {
-	PlayerID int64          `json:"playerId"`
-	StripeID string         `json:"stripeId"`
-	Amount   pgtype.Numeric `json:"amount"`
-	Status   string         `json:"status"`
+	PlayerID      int64  `json:"playerId"`
+	TransactionID string `json:"transactionId"`
+	Amount        int32  `json:"amount"`
+	Status        string `json:"status"`
 }
 
 // CreatePayment
 //
-//	INSERT INTO payments (player_id, stripe_id, amount, status, payment_date)
+//	INSERT INTO payments (player_id, transaction_id, amount, status, payment_date)
 //	VALUES ($1, $2, $3, $4, NOW())
-//	RETURNING id, player_id, stripe_id, amount, status, payment_date
+//	RETURNING id, player_id, transaction_id, amount, status, payment_date
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
 	row := q.db.QueryRow(ctx, createPayment,
 		arg.PlayerID,
-		arg.StripeID,
+		arg.TransactionID,
 		arg.Amount,
 		arg.Status,
 	)
@@ -40,7 +40,7 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 	err := row.Scan(
 		&i.ID,
 		&i.PlayerID,
-		&i.StripeID,
+		&i.TransactionID,
 		&i.Amount,
 		&i.Status,
 		&i.PaymentDate,
@@ -63,19 +63,19 @@ func (q *Queries) DeletePayment(ctx context.Context, id int64) error {
 }
 
 const getPaymentById = `-- name: GetPaymentById :one
-SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments WHERE id = $1
+SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments WHERE id = $1
 `
 
 // GetPaymentById
 //
-//	SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments WHERE id = $1
+//	SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments WHERE id = $1
 func (q *Queries) GetPaymentById(ctx context.Context, id int64) (Payment, error) {
 	row := q.db.QueryRow(ctx, getPaymentById, id)
 	var i Payment
 	err := row.Scan(
 		&i.ID,
 		&i.PlayerID,
-		&i.StripeID,
+		&i.TransactionID,
 		&i.Amount,
 		&i.Status,
 		&i.PaymentDate,
@@ -83,20 +83,20 @@ func (q *Queries) GetPaymentById(ctx context.Context, id int64) (Payment, error)
 	return i, err
 }
 
-const getPaymentByStripeId = `-- name: GetPaymentByStripeId :one
-SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments WHERE stripe_id = $1
+const getPaymentByTransactionId = `-- name: GetPaymentByTransactionId :one
+SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments WHERE transaction_id = $1
 `
 
-// GetPaymentByStripeId
+// GetPaymentByTransactionId
 //
-//	SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments WHERE stripe_id = $1
-func (q *Queries) GetPaymentByStripeId(ctx context.Context, stripeID string) (Payment, error) {
-	row := q.db.QueryRow(ctx, getPaymentByStripeId, stripeID)
+//	SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments WHERE transaction_id = $1
+func (q *Queries) GetPaymentByTransactionId(ctx context.Context, transactionID string) (Payment, error) {
+	row := q.db.QueryRow(ctx, getPaymentByTransactionId, transactionID)
 	var i Payment
 	err := row.Scan(
 		&i.ID,
 		&i.PlayerID,
-		&i.StripeID,
+		&i.TransactionID,
 		&i.Amount,
 		&i.Status,
 		&i.PaymentDate,
@@ -105,7 +105,7 @@ func (q *Queries) GetPaymentByStripeId(ctx context.Context, stripeID string) (Pa
 }
 
 const getPaymentWithPlayer = `-- name: GetPaymentWithPlayer :one
-SELECT py.id, py.player_id, py.stripe_id, py.amount, py.status, py.payment_date, p.user_id, u.email, u.first_name, u.last_name
+SELECT py.id, py.player_id, py.transaction_id, py.amount, py.status, py.payment_date, p.user_id, u.email, u.first_name, u.last_name
 FROM payments py
 INNER JOIN players p ON py.player_id = p.id
 INNER JOIN users u ON p.user_id = u.id
@@ -113,21 +113,21 @@ WHERE py.id = $1
 `
 
 type GetPaymentWithPlayerRow struct {
-	ID          int64            `json:"id"`
-	PlayerID    int64            `json:"playerId"`
-	StripeID    string           `json:"stripeId"`
-	Amount      pgtype.Numeric   `json:"amount"`
-	Status      string           `json:"status"`
-	PaymentDate pgtype.Timestamp `json:"paymentDate"`
-	UserID      int64            `json:"userId"`
-	Email       string           `json:"email"`
-	FirstName   string           `json:"firstName"`
-	LastName    string           `json:"lastName"`
+	ID            int64            `json:"id"`
+	PlayerID      int64            `json:"playerId"`
+	TransactionID string           `json:"transactionId"`
+	Amount        int32            `json:"amount"`
+	Status        string           `json:"status"`
+	PaymentDate   pgtype.Timestamp `json:"paymentDate"`
+	UserID        int64            `json:"userId"`
+	Email         string           `json:"email"`
+	FirstName     string           `json:"firstName"`
+	LastName      string           `json:"lastName"`
 }
 
 // GetPaymentWithPlayer
 //
-//	SELECT py.id, py.player_id, py.stripe_id, py.amount, py.status, py.payment_date, p.user_id, u.email, u.first_name, u.last_name
+//	SELECT py.id, py.player_id, py.transaction_id, py.amount, py.status, py.payment_date, p.user_id, u.email, u.first_name, u.last_name
 //	FROM payments py
 //	INNER JOIN players p ON py.player_id = p.id
 //	INNER JOIN users u ON p.user_id = u.id
@@ -138,7 +138,7 @@ func (q *Queries) GetPaymentWithPlayer(ctx context.Context, id int64) (GetPaymen
 	err := row.Scan(
 		&i.ID,
 		&i.PlayerID,
-		&i.StripeID,
+		&i.TransactionID,
 		&i.Amount,
 		&i.Status,
 		&i.PaymentDate,
@@ -195,13 +195,13 @@ func (q *Queries) GetPlayerPaymentSummary(ctx context.Context, playerID int64) (
 }
 
 const listPayments = `-- name: ListPayments :many
-SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments
+SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments
 ORDER BY payment_date DESC
 `
 
 // ListPayments
 //
-//	SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments
+//	SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments
 //	ORDER BY payment_date DESC
 func (q *Queries) ListPayments(ctx context.Context) ([]Payment, error) {
 	rows, err := q.db.Query(ctx, listPayments)
@@ -215,7 +215,7 @@ func (q *Queries) ListPayments(ctx context.Context) ([]Payment, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlayerID,
-			&i.StripeID,
+			&i.TransactionID,
 			&i.Amount,
 			&i.Status,
 			&i.PaymentDate,
@@ -231,14 +231,14 @@ func (q *Queries) ListPayments(ctx context.Context) ([]Payment, error) {
 }
 
 const listPaymentsByPlayer = `-- name: ListPaymentsByPlayer :many
-SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments
+SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments
 WHERE player_id = $1
 ORDER BY payment_date DESC
 `
 
 // ListPaymentsByPlayer
 //
-//	SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments
+//	SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments
 //	WHERE player_id = $1
 //	ORDER BY payment_date DESC
 func (q *Queries) ListPaymentsByPlayer(ctx context.Context, playerID int64) ([]Payment, error) {
@@ -253,7 +253,7 @@ func (q *Queries) ListPaymentsByPlayer(ctx context.Context, playerID int64) ([]P
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlayerID,
-			&i.StripeID,
+			&i.TransactionID,
 			&i.Amount,
 			&i.Status,
 			&i.PaymentDate,
@@ -269,14 +269,14 @@ func (q *Queries) ListPaymentsByPlayer(ctx context.Context, playerID int64) ([]P
 }
 
 const listPaymentsByStatus = `-- name: ListPaymentsByStatus :many
-SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments
+SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments
 WHERE status = $1
 ORDER BY payment_date DESC
 `
 
 // ListPaymentsByStatus
 //
-//	SELECT id, player_id, stripe_id, amount, status, payment_date FROM payments
+//	SELECT id, player_id, transaction_id, amount, status, payment_date FROM payments
 //	WHERE status = $1
 //	ORDER BY payment_date DESC
 func (q *Queries) ListPaymentsByStatus(ctx context.Context, status string) ([]Payment, error) {
@@ -291,7 +291,7 @@ func (q *Queries) ListPaymentsByStatus(ctx context.Context, status string) ([]Pa
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlayerID,
-			&i.StripeID,
+			&i.TransactionID,
 			&i.Amount,
 			&i.Status,
 			&i.PaymentDate,
@@ -307,7 +307,7 @@ func (q *Queries) ListPaymentsByStatus(ctx context.Context, status string) ([]Pa
 }
 
 const listPaymentsWithPlayerInfo = `-- name: ListPaymentsWithPlayerInfo :many
-SELECT py.id, py.player_id, py.stripe_id, py.amount, py.status, py.payment_date, u.first_name, u.last_name, u.email
+SELECT py.id, py.player_id, py.transaction_id, py.amount, py.status, py.payment_date, p.user_id, u.first_name, u.last_name, u.email
 FROM payments py
 INNER JOIN players p ON py.player_id = p.id
 INNER JOIN users u ON p.user_id = u.id
@@ -315,20 +315,21 @@ ORDER BY py.payment_date DESC
 `
 
 type ListPaymentsWithPlayerInfoRow struct {
-	ID          int64            `json:"id"`
-	PlayerID    int64            `json:"playerId"`
-	StripeID    string           `json:"stripeId"`
-	Amount      pgtype.Numeric   `json:"amount"`
-	Status      string           `json:"status"`
-	PaymentDate pgtype.Timestamp `json:"paymentDate"`
-	FirstName   string           `json:"firstName"`
-	LastName    string           `json:"lastName"`
-	Email       string           `json:"email"`
+	ID            int64            `json:"id"`
+	PlayerID      int64            `json:"playerId"`
+	TransactionID string           `json:"transactionId"`
+	Amount        int32            `json:"amount"`
+	Status        string           `json:"status"`
+	PaymentDate   pgtype.Timestamp `json:"paymentDate"`
+	UserID        int64            `json:"userId"`
+	FirstName     string           `json:"firstName"`
+	LastName      string           `json:"lastName"`
+	Email         string           `json:"email"`
 }
 
 // ListPaymentsWithPlayerInfo
 //
-//	SELECT py.id, py.player_id, py.stripe_id, py.amount, py.status, py.payment_date, u.first_name, u.last_name, u.email
+//	SELECT py.id, py.player_id, py.transaction_id, py.amount, py.status, py.payment_date, p.user_id, u.first_name, u.last_name, u.email
 //	FROM payments py
 //	INNER JOIN players p ON py.player_id = p.id
 //	INNER JOIN users u ON p.user_id = u.id
@@ -345,10 +346,11 @@ func (q *Queries) ListPaymentsWithPlayerInfo(ctx context.Context) ([]ListPayment
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlayerID,
-			&i.StripeID,
+			&i.TransactionID,
 			&i.Amount,
 			&i.Status,
 			&i.PaymentDate,
+			&i.UserID,
 			&i.FirstName,
 			&i.LastName,
 			&i.Email,

@@ -37,36 +37,29 @@ type PasswordResetToken struct {
 }
 
 type Payment struct {
-	ID          int64            `json:"id"`
-	PlayerID    int64            `json:"playerId"`
-	StripeID    string           `json:"stripeId"`
-	Amount      pgtype.Numeric   `json:"amount"`
-	Status      string           `json:"status"`
-	PaymentDate pgtype.Timestamp `json:"paymentDate"`
+	ID            int64            `json:"id"`
+	PlayerID      int64            `json:"playerId"`
+	TransactionID string           `json:"transactionId"`
+	Amount        int32            `json:"amount"`
+	Status        string           `json:"status"`
+	PaymentDate   pgtype.Timestamp `json:"paymentDate"`
 }
 
 type Player struct {
-	ID                 int64            `json:"id"`
-	UserID             int64            `json:"userId"`
-	TeamID             pgtype.Int8      `json:"teamId"`
-	RegistrationFeeDue pgtype.Numeric   `json:"registrationFeeDue"`
-	IsFullyRegistered  bool             `json:"isFullyRegistered"`
-	IsActive           bool             `json:"isActive"`
-	JerseyNumber       pgtype.Int4      `json:"jerseyNumber"`
-	CreatedAt          pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt          pgtype.Timestamp `json:"updatedAt"`
+	ID           int64            `json:"id"`
+	UserID       int64            `json:"userId"`
+	TeamID       pgtype.Int8      `json:"teamId"`
+	FeeRemainder int32            `json:"feeRemainder"`
+	JerseyNumber pgtype.Int4      `json:"jerseyNumber"`
+	CreatedAt    pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
 }
 
 type Team struct {
-	ID            int64            `json:"id"`
-	Name          string           `json:"name"`
-	Wins          int32            `json:"wins"`
-	Losses        int32            `json:"losses"`
-	Draws         int32            `json:"draws"`
-	PointsFor     int32            `json:"pointsFor"`
-	PointsAgainst int32            `json:"pointsAgainst"`
-	CreatedAt     pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt     pgtype.Timestamp `json:"updatedAt"`
+	ID        int64            `json:"id"`
+	Name      string           `json:"name"`
+	CreatedAt pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt pgtype.Timestamp `json:"updatedAt"`
 }
 
 type User struct {

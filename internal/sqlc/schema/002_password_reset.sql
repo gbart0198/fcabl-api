@@ -1,4 +1,3 @@
--- Password reset tokens table
 CREATE TABLE password_reset_tokens (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -8,6 +7,5 @@ CREATE TABLE password_reset_tokens (
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- Index for faster lookups
 CREATE INDEX idx_password_reset_tokens_token ON password_reset_tokens(token);
 CREATE INDEX idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);

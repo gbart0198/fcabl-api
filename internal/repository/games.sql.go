@@ -11,25 +11,67 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createGame = `-- name: CreateGame :one
+const createGameWithScore = `-- name: CreateGameWithScore :one
+INSERT INTO games (home_team_id, away_team_id, game_time, home_score, away_score, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+RETURNING id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status
+`
+
+type CreateGameWithScoreParams struct {
+	HomeTeamID int64            `json:"homeTeamId"`
+	AwayTeamID int64            `json:"awayTeamId"`
+	GameTime   pgtype.Timestamp `json:"gameTime"`
+	HomeScore  int32            `json:"homeScore"`
+	AwayScore  int32            `json:"awayScore"`
+}
+
+// CreateGameWithScore
+//
+//	INSERT INTO games (home_team_id, away_team_id, game_time, home_score, away_score, created_at, updated_at)
+//	VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+//	RETURNING id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status
+func (q *Queries) CreateGameWithScore(ctx context.Context, arg CreateGameWithScoreParams) (Game, error) {
+	row := q.db.QueryRow(ctx, createGameWithScore,
+		arg.HomeTeamID,
+		arg.AwayTeamID,
+		arg.GameTime,
+		arg.HomeScore,
+		arg.AwayScore,
+	)
+	var i Game
+	err := row.Scan(
+		&i.ID,
+		&i.HomeTeamID,
+		&i.AwayTeamID,
+		&i.HomeScore,
+		&i.AwayScore,
+		&i.GameTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Status,
+	)
+	return i, err
+}
+
+const createGameWithoutScore = `-- name: CreateGameWithoutScore :one
 INSERT INTO games (home_team_id, away_team_id, game_time, created_at, updated_at)
 VALUES ($1, $2, $3, NOW(), NOW())
 RETURNING id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status
 `
 
-type CreateGameParams struct {
+type CreateGameWithoutScoreParams struct {
 	HomeTeamID int64            `json:"homeTeamId"`
 	AwayTeamID int64            `json:"awayTeamId"`
 	GameTime   pgtype.Timestamp `json:"gameTime"`
 }
 
-// CreateGame
+// CreateGameWithoutScore
 //
 //	INSERT INTO games (home_team_id, away_team_id, game_time, created_at, updated_at)
 //	VALUES ($1, $2, $3, NOW(), NOW())
 //	RETURNING id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status
-func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (Game, error) {
-	row := q.db.QueryRow(ctx, createGame, arg.HomeTeamID, arg.AwayTeamID, arg.GameTime)
+func (q *Queries) CreateGameWithoutScore(ctx context.Context, arg CreateGameWithoutScoreParams) (Game, error) {
+	row := q.db.QueryRow(ctx, createGameWithoutScore, arg.HomeTeamID, arg.AwayTeamID, arg.GameTime)
 	var i Game
 	err := row.Scan(
 		&i.ID,
@@ -84,9 +126,7 @@ func (q *Queries) GetGameById(ctx context.Context, id int64) (Game, error) {
 }
 
 const getGameWithTeams = `-- name: GetGameWithTeams :one
-SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
-       ht.name as home_team_name, ht.wins as home_team_wins, ht.losses as home_team_losses,
-       at.name as away_team_name, at.wins as away_team_wins, at.losses as away_team_losses
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status, ht.name as home_team_name, at.name as away_team_name
 FROM games g
 INNER JOIN teams ht ON g.home_team_id = ht.id
 INNER JOIN teams at ON g.away_team_id = at.id
@@ -94,28 +134,22 @@ WHERE g.id = $1
 `
 
 type GetGameWithTeamsRow struct {
-	ID             int64            `json:"id"`
-	HomeTeamID     int64            `json:"homeTeamId"`
-	AwayTeamID     int64            `json:"awayTeamId"`
-	HomeScore      int32            `json:"homeScore"`
-	AwayScore      int32            `json:"awayScore"`
-	GameTime       pgtype.Timestamp `json:"gameTime"`
-	CreatedAt      pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt      pgtype.Timestamp `json:"updatedAt"`
-	Status         string           `json:"status"`
-	HomeTeamName   string           `json:"homeTeamName"`
-	HomeTeamWins   int32            `json:"homeTeamWins"`
-	HomeTeamLosses int32            `json:"homeTeamLosses"`
-	AwayTeamName   string           `json:"awayTeamName"`
-	AwayTeamWins   int32            `json:"awayTeamWins"`
-	AwayTeamLosses int32            `json:"awayTeamLosses"`
+	ID           int64            `json:"id"`
+	HomeTeamID   int64            `json:"homeTeamId"`
+	AwayTeamID   int64            `json:"awayTeamId"`
+	HomeScore    int32            `json:"homeScore"`
+	AwayScore    int32            `json:"awayScore"`
+	GameTime     pgtype.Timestamp `json:"gameTime"`
+	CreatedAt    pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
+	Status       string           `json:"status"`
+	HomeTeamName string           `json:"homeTeamName"`
+	AwayTeamName string           `json:"awayTeamName"`
 }
 
 // GetGameWithTeams
 //
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status,
-//	       ht.name as home_team_name, ht.wins as home_team_wins, ht.losses as home_team_losses,
-//	       at.name as away_team_name, at.wins as away_team_wins, at.losses as away_team_losses
+//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score, g.game_time, g.created_at, g.updated_at, g.status, ht.name as home_team_name, at.name as away_team_name
 //	FROM games g
 //	INNER JOIN teams ht ON g.home_team_id = ht.id
 //	INNER JOIN teams at ON g.away_team_id = at.id
@@ -134,11 +168,7 @@ func (q *Queries) GetGameWithTeams(ctx context.Context, id int64) (GetGameWithTe
 		&i.UpdatedAt,
 		&i.Status,
 		&i.HomeTeamName,
-		&i.HomeTeamWins,
-		&i.HomeTeamLosses,
 		&i.AwayTeamName,
-		&i.AwayTeamWins,
-		&i.AwayTeamLosses,
 	)
 	return i, err
 }
@@ -303,157 +333,6 @@ func (q *Queries) ListGamesWithTeams(ctx context.Context) ([]ListGamesWithTeamsR
 			&i.Status,
 			&i.HomeTeamName,
 			&i.AwayTeamName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listPastGames = `-- name: ListPastGames :many
-SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
-WHERE game_time <= NOW()
-ORDER BY game_time DESC
-`
-
-// ListPastGames
-//
-//	SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
-//	WHERE game_time <= NOW()
-//	ORDER BY game_time DESC
-func (q *Queries) ListPastGames(ctx context.Context) ([]Game, error) {
-	rows, err := q.db.Query(ctx, listPastGames)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Game{}
-	for rows.Next() {
-		var i Game
-		if err := rows.Scan(
-			&i.ID,
-			&i.HomeTeamID,
-			&i.AwayTeamID,
-			&i.HomeScore,
-			&i.AwayScore,
-			&i.GameTime,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Status,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listTeamSchedule = `-- name: ListTeamSchedule :many
-SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score,
-       g.game_time, g.created_at, g.updated_at, g.status,
-       ht.name as home_team_name,
-       at.name as away_team_name
-FROM games g
-INNER JOIN teams ht ON g.home_team_id = ht.id
-INNER JOIN teams at ON g.away_team_id = at.id
-WHERE g.home_team_id = $1 OR g.away_team_id = $1
-ORDER BY g.game_time
-`
-
-type ListTeamScheduleRow struct {
-	ID           int64            `json:"id"`
-	HomeTeamID   int64            `json:"homeTeamId"`
-	AwayTeamID   int64            `json:"awayTeamId"`
-	HomeScore    int32            `json:"homeScore"`
-	AwayScore    int32            `json:"awayScore"`
-	GameTime     pgtype.Timestamp `json:"gameTime"`
-	CreatedAt    pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
-	Status       string           `json:"status"`
-	HomeTeamName string           `json:"homeTeamName"`
-	AwayTeamName string           `json:"awayTeamName"`
-}
-
-// ListTeamSchedule
-//
-//	SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score,
-//	       g.game_time, g.created_at, g.updated_at, g.status,
-//	       ht.name as home_team_name,
-//	       at.name as away_team_name
-//	FROM games g
-//	INNER JOIN teams ht ON g.home_team_id = ht.id
-//	INNER JOIN teams at ON g.away_team_id = at.id
-//	WHERE g.home_team_id = $1 OR g.away_team_id = $1
-//	ORDER BY g.game_time
-func (q *Queries) ListTeamSchedule(ctx context.Context, homeTeamID int64) ([]ListTeamScheduleRow, error) {
-	rows, err := q.db.Query(ctx, listTeamSchedule, homeTeamID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListTeamScheduleRow{}
-	for rows.Next() {
-		var i ListTeamScheduleRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.HomeTeamID,
-			&i.AwayTeamID,
-			&i.HomeScore,
-			&i.AwayScore,
-			&i.GameTime,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Status,
-			&i.HomeTeamName,
-			&i.AwayTeamName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listUpcomingGames = `-- name: ListUpcomingGames :many
-SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
-WHERE game_time > NOW()
-ORDER BY game_time
-`
-
-// ListUpcomingGames
-//
-//	SELECT id, home_team_id, away_team_id, home_score, away_score, game_time, created_at, updated_at, status FROM games
-//	WHERE game_time > NOW()
-//	ORDER BY game_time
-func (q *Queries) ListUpcomingGames(ctx context.Context) ([]Game, error) {
-	rows, err := q.db.Query(ctx, listUpcomingGames)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Game{}
-	for rows.Next() {
-		var i Game
-		if err := rows.Scan(
-			&i.ID,
-			&i.HomeTeamID,
-			&i.AwayTeamID,
-			&i.HomeScore,
-			&i.AwayScore,
-			&i.GameTime,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Status,
 		); err != nil {
 			return nil, err
 		}

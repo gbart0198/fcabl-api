@@ -12,32 +12,28 @@ import (
 )
 
 const createPlayer = `-- name: CreatePlayer :one
-INSERT INTO players (user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-RETURNING id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at
+INSERT INTO players (user_id, team_id, fee_remainder, jersey_number, created_at, updated_at)
+VALUES ($1, $2, $3, $4, NOW(), NOW())
+RETURNING id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at
 `
 
 type CreatePlayerParams struct {
-	UserID             int64          `json:"userId"`
-	TeamID             pgtype.Int8    `json:"teamId"`
-	RegistrationFeeDue pgtype.Numeric `json:"registrationFeeDue"`
-	IsFullyRegistered  bool           `json:"isFullyRegistered"`
-	IsActive           bool           `json:"isActive"`
-	JerseyNumber       pgtype.Int4    `json:"jerseyNumber"`
+	UserID       int64       `json:"userId"`
+	TeamID       pgtype.Int8 `json:"teamId"`
+	FeeRemainder int32       `json:"feeRemainder"`
+	JerseyNumber pgtype.Int4 `json:"jerseyNumber"`
 }
 
 // CreatePlayer
 //
-//	INSERT INTO players (user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at)
-//	VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-//	RETURNING id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at
+//	INSERT INTO players (user_id, team_id, fee_remainder, jersey_number, created_at, updated_at)
+//	VALUES ($1, $2, $3, $4, NOW(), NOW())
+//	RETURNING id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at
 func (q *Queries) CreatePlayer(ctx context.Context, arg CreatePlayerParams) (Player, error) {
 	row := q.db.QueryRow(ctx, createPlayer,
 		arg.UserID,
 		arg.TeamID,
-		arg.RegistrationFeeDue,
-		arg.IsFullyRegistered,
-		arg.IsActive,
+		arg.FeeRemainder,
 		arg.JerseyNumber,
 	)
 	var i Player
@@ -45,9 +41,7 @@ func (q *Queries) CreatePlayer(ctx context.Context, arg CreatePlayerParams) (Pla
 		&i.ID,
 		&i.UserID,
 		&i.TeamID,
-		&i.RegistrationFeeDue,
-		&i.IsFullyRegistered,
-		&i.IsActive,
+		&i.FeeRemainder,
 		&i.JerseyNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -70,12 +64,12 @@ func (q *Queries) DeletePlayer(ctx context.Context, id int64) error {
 }
 
 const getPlayerById = `-- name: GetPlayerById :one
-SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players WHERE id = $1
+SELECT id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at FROM players WHERE id = $1
 `
 
 // GetPlayerById
 //
-//	SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players WHERE id = $1
+//	SELECT id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at FROM players WHERE id = $1
 func (q *Queries) GetPlayerById(ctx context.Context, id int64) (Player, error) {
 	row := q.db.QueryRow(ctx, getPlayerById, id)
 	var i Player
@@ -83,9 +77,7 @@ func (q *Queries) GetPlayerById(ctx context.Context, id int64) (Player, error) {
 		&i.ID,
 		&i.UserID,
 		&i.TeamID,
-		&i.RegistrationFeeDue,
-		&i.IsFullyRegistered,
-		&i.IsActive,
+		&i.FeeRemainder,
 		&i.JerseyNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -94,12 +86,12 @@ func (q *Queries) GetPlayerById(ctx context.Context, id int64) (Player, error) {
 }
 
 const getPlayerByUserId = `-- name: GetPlayerByUserId :one
-SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players WHERE user_id = $1
+SELECT id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at FROM players WHERE user_id = $1
 `
 
 // GetPlayerByUserId
 //
-//	SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players WHERE user_id = $1
+//	SELECT id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at FROM players WHERE user_id = $1
 func (q *Queries) GetPlayerByUserId(ctx context.Context, userID int64) (Player, error) {
 	row := q.db.QueryRow(ctx, getPlayerByUserId, userID)
 	var i Player
@@ -107,9 +99,7 @@ func (q *Queries) GetPlayerByUserId(ctx context.Context, userID int64) (Player, 
 		&i.ID,
 		&i.UserID,
 		&i.TeamID,
-		&i.RegistrationFeeDue,
-		&i.IsFullyRegistered,
-		&i.IsActive,
+		&i.FeeRemainder,
 		&i.JerseyNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -117,90 +107,120 @@ func (q *Queries) GetPlayerByUserId(ctx context.Context, userID int64) (Player, 
 	return i, err
 }
 
-const getPlayerWithTeam = `-- name: GetPlayerWithTeam :one
-SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, p.is_active, p.jersey_number, p.created_at, p.updated_at, t.name as team_name
+const getPlayerWithUserAndTeamInfo = `-- name: GetPlayerWithUserAndTeamInfo :one
+SELECT p.id, p.user_id, p.team_id, t.name, p.jersey_number, u.first_name, u.last_name
 FROM players p
-LEFT JOIN teams t ON p.team_id = t.id
+INNER JOIN users u ON p.user_id = u.id
+INNER JOIN teams t on t.id = p.team_id
 WHERE p.id = $1
 `
 
-type GetPlayerWithTeamRow struct {
-	ID                 int64            `json:"id"`
-	UserID             int64            `json:"userId"`
-	TeamID             pgtype.Int8      `json:"teamId"`
-	RegistrationFeeDue pgtype.Numeric   `json:"registrationFeeDue"`
-	IsFullyRegistered  bool             `json:"isFullyRegistered"`
-	IsActive           bool             `json:"isActive"`
-	JerseyNumber       pgtype.Int4      `json:"jerseyNumber"`
-	CreatedAt          pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt          pgtype.Timestamp `json:"updatedAt"`
-	TeamName           pgtype.Text      `json:"teamName"`
+type GetPlayerWithUserAndTeamInfoRow struct {
+	ID           int64       `json:"id"`
+	UserID       int64       `json:"userId"`
+	TeamID       pgtype.Int8 `json:"teamId"`
+	Name         string      `json:"name"`
+	JerseyNumber pgtype.Int4 `json:"jerseyNumber"`
+	FirstName    string      `json:"firstName"`
+	LastName     string      `json:"lastName"`
 }
 
-// GetPlayerWithTeam
+// GetPlayerWithUserAndTeamInfo
 //
-//	SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, p.is_active, p.jersey_number, p.created_at, p.updated_at, t.name as team_name
+//	SELECT p.id, p.user_id, p.team_id, t.name, p.jersey_number, u.first_name, u.last_name
 //	FROM players p
-//	LEFT JOIN teams t ON p.team_id = t.id
+//	INNER JOIN users u ON p.user_id = u.id
+//	INNER JOIN teams t on t.id = p.team_id
 //	WHERE p.id = $1
-func (q *Queries) GetPlayerWithTeam(ctx context.Context, id int64) (GetPlayerWithTeamRow, error) {
-	row := q.db.QueryRow(ctx, getPlayerWithTeam, id)
-	var i GetPlayerWithTeamRow
+func (q *Queries) GetPlayerWithUserAndTeamInfo(ctx context.Context, id int64) (GetPlayerWithUserAndTeamInfoRow, error) {
+	row := q.db.QueryRow(ctx, getPlayerWithUserAndTeamInfo, id)
+	var i GetPlayerWithUserAndTeamInfoRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.TeamID,
-		&i.RegistrationFeeDue,
-		&i.IsFullyRegistered,
-		&i.IsActive,
+		&i.Name,
 		&i.JerseyNumber,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.TeamName,
+		&i.FirstName,
+		&i.LastName,
 	)
 	return i, err
 }
 
-const getPlayerWithUser = `-- name: GetPlayerWithUser :one
-SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, p.is_active, p.jersey_number, p.created_at, p.updated_at, u.email, u.phone_number, u.first_name, u.last_name, u.role
+const getPlayerWithUserInfo = `-- name: GetPlayerWithUserInfo :one
+SELECT p.id, p.user_id, p.team_id, p.jersey_number, u.first_name, u.last_name
 FROM players p
 INNER JOIN users u ON p.user_id = u.id
 WHERE p.id = $1
 `
 
-type GetPlayerWithUserRow struct {
-	ID                 int64            `json:"id"`
-	UserID             int64            `json:"userId"`
-	TeamID             pgtype.Int8      `json:"teamId"`
-	RegistrationFeeDue pgtype.Numeric   `json:"registrationFeeDue"`
-	IsFullyRegistered  bool             `json:"isFullyRegistered"`
-	IsActive           bool             `json:"isActive"`
-	JerseyNumber       pgtype.Int4      `json:"jerseyNumber"`
-	CreatedAt          pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt          pgtype.Timestamp `json:"updatedAt"`
-	Email              string           `json:"email"`
-	PhoneNumber        string           `json:"phoneNumber"`
-	FirstName          string           `json:"firstName"`
-	LastName           string           `json:"lastName"`
-	Role               string           `json:"role"`
+type GetPlayerWithUserInfoRow struct {
+	ID           int64       `json:"id"`
+	UserID       int64       `json:"userId"`
+	TeamID       pgtype.Int8 `json:"teamId"`
+	JerseyNumber pgtype.Int4 `json:"jerseyNumber"`
+	FirstName    string      `json:"firstName"`
+	LastName     string      `json:"lastName"`
 }
 
-// GetPlayerWithUser
+// GetPlayerWithUserInfo
 //
-//	SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, p.is_active, p.jersey_number, p.created_at, p.updated_at, u.email, u.phone_number, u.first_name, u.last_name, u.role
+//	SELECT p.id, p.user_id, p.team_id, p.jersey_number, u.first_name, u.last_name
 //	FROM players p
 //	INNER JOIN users u ON p.user_id = u.id
 //	WHERE p.id = $1
-func (q *Queries) GetPlayerWithUser(ctx context.Context, id int64) (GetPlayerWithUserRow, error) {
-	row := q.db.QueryRow(ctx, getPlayerWithUser, id)
-	var i GetPlayerWithUserRow
+func (q *Queries) GetPlayerWithUserInfo(ctx context.Context, id int64) (GetPlayerWithUserInfoRow, error) {
+	row := q.db.QueryRow(ctx, getPlayerWithUserInfo, id)
+	var i GetPlayerWithUserInfoRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.TeamID,
-		&i.RegistrationFeeDue,
-		&i.IsFullyRegistered,
-		&i.IsActive,
+		&i.JerseyNumber,
+		&i.FirstName,
+		&i.LastName,
+	)
+	return i, err
+}
+
+const getPlayerWithUserInfoDetailed = `-- name: GetPlayerWithUserInfoDetailed :one
+SELECT p.id, p.user_id, p.team_id, p.fee_remainder, p.jersey_number, p.created_at, p.updated_at,
+u.email, u.phone_number, u.first_name, u.last_name, u.role
+FROM players p
+INNER JOIN users u ON p.user_id = u.id
+WHERE p.id = $1
+`
+
+type GetPlayerWithUserInfoDetailedRow struct {
+	ID           int64            `json:"id"`
+	UserID       int64            `json:"userId"`
+	TeamID       pgtype.Int8      `json:"teamId"`
+	FeeRemainder int32            `json:"feeRemainder"`
+	JerseyNumber pgtype.Int4      `json:"jerseyNumber"`
+	CreatedAt    pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
+	Email        string           `json:"email"`
+	PhoneNumber  string           `json:"phoneNumber"`
+	FirstName    string           `json:"firstName"`
+	LastName     string           `json:"lastName"`
+	Role         string           `json:"role"`
+}
+
+// GetPlayerWithUserInfoDetailed
+//
+//	SELECT p.id, p.user_id, p.team_id, p.fee_remainder, p.jersey_number, p.created_at, p.updated_at,
+//	u.email, u.phone_number, u.first_name, u.last_name, u.role
+//	FROM players p
+//	INNER JOIN users u ON p.user_id = u.id
+//	WHERE p.id = $1
+func (q *Queries) GetPlayerWithUserInfoDetailed(ctx context.Context, id int64) (GetPlayerWithUserInfoDetailedRow, error) {
+	row := q.db.QueryRow(ctx, getPlayerWithUserInfoDetailed, id)
+	var i GetPlayerWithUserInfoDetailedRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TeamID,
+		&i.FeeRemainder,
 		&i.JerseyNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -213,118 +233,14 @@ func (q *Queries) GetPlayerWithUser(ctx context.Context, id int64) (GetPlayerWit
 	return i, err
 }
 
-const listActivePlayers = `-- name: ListActivePlayers :many
-SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players
-WHERE is_active = true
-ORDER BY id
-`
-
-// ListActivePlayers
-//
-//	SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players
-//	WHERE is_active = true
-//	ORDER BY id
-func (q *Queries) ListActivePlayers(ctx context.Context) ([]Player, error) {
-	rows, err := q.db.Query(ctx, listActivePlayers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Player{}
-	for rows.Next() {
-		var i Player
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.TeamID,
-			&i.RegistrationFeeDue,
-			&i.IsFullyRegistered,
-			&i.IsActive,
-			&i.JerseyNumber,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listFreeAgents = `-- name: ListFreeAgents :many
-SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, p.is_active, p.jersey_number, p.created_at, p.updated_at, u.email, u.first_name, u.last_name
-FROM players p
-INNER JOIN users u ON p.user_id = u.id
-WHERE p.team_id IS NULL AND p.is_active = true
-ORDER BY u.last_name, u.first_name
-`
-
-type ListFreeAgentsRow struct {
-	ID                 int64            `json:"id"`
-	UserID             int64            `json:"userId"`
-	TeamID             pgtype.Int8      `json:"teamId"`
-	RegistrationFeeDue pgtype.Numeric   `json:"registrationFeeDue"`
-	IsFullyRegistered  bool             `json:"isFullyRegistered"`
-	IsActive           bool             `json:"isActive"`
-	JerseyNumber       pgtype.Int4      `json:"jerseyNumber"`
-	CreatedAt          pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt          pgtype.Timestamp `json:"updatedAt"`
-	Email              string           `json:"email"`
-	FirstName          string           `json:"firstName"`
-	LastName           string           `json:"lastName"`
-}
-
-// ListFreeAgents
-//
-//	SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, p.is_active, p.jersey_number, p.created_at, p.updated_at, u.email, u.first_name, u.last_name
-//	FROM players p
-//	INNER JOIN users u ON p.user_id = u.id
-//	WHERE p.team_id IS NULL AND p.is_active = true
-//	ORDER BY u.last_name, u.first_name
-func (q *Queries) ListFreeAgents(ctx context.Context) ([]ListFreeAgentsRow, error) {
-	rows, err := q.db.Query(ctx, listFreeAgents)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListFreeAgentsRow{}
-	for rows.Next() {
-		var i ListFreeAgentsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.TeamID,
-			&i.RegistrationFeeDue,
-			&i.IsFullyRegistered,
-			&i.IsActive,
-			&i.JerseyNumber,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Email,
-			&i.FirstName,
-			&i.LastName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listPlayers = `-- name: ListPlayers :many
-SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players
+SELECT id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at FROM players
 ORDER BY id
 `
 
 // ListPlayers
 //
-//	SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players
+//	SELECT id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at FROM players
 //	ORDER BY id
 func (q *Queries) ListPlayers(ctx context.Context) ([]Player, error) {
 	rows, err := q.db.Query(ctx, listPlayers)
@@ -339,9 +255,7 @@ func (q *Queries) ListPlayers(ctx context.Context) ([]Player, error) {
 			&i.ID,
 			&i.UserID,
 			&i.TeamID,
-			&i.RegistrationFeeDue,
-			&i.IsFullyRegistered,
-			&i.IsActive,
+			&i.FeeRemainder,
 			&i.JerseyNumber,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -357,14 +271,14 @@ func (q *Queries) ListPlayers(ctx context.Context) ([]Player, error) {
 }
 
 const listPlayersByTeam = `-- name: ListPlayersByTeam :many
-SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players
+SELECT id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at FROM players
 WHERE team_id = $1
 ORDER BY jersey_number, id
 `
 
 // ListPlayersByTeam
 //
-//	SELECT id, user_id, team_id, registration_fee_due, is_fully_registered, is_active, jersey_number, created_at, updated_at FROM players
+//	SELECT id, user_id, team_id, fee_remainder, jersey_number, created_at, updated_at FROM players
 //	WHERE team_id = $1
 //	ORDER BY jersey_number, id
 func (q *Queries) ListPlayersByTeam(ctx context.Context, teamID pgtype.Int8) ([]Player, error) {
@@ -380,9 +294,7 @@ func (q *Queries) ListPlayersByTeam(ctx context.Context, teamID pgtype.Int8) ([]
 			&i.ID,
 			&i.UserID,
 			&i.TeamID,
-			&i.RegistrationFeeDue,
-			&i.IsFullyRegistered,
-			&i.IsActive,
+			&i.FeeRemainder,
 			&i.JerseyNumber,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -398,30 +310,24 @@ func (q *Queries) ListPlayersByTeam(ctx context.Context, teamID pgtype.Int8) ([]
 }
 
 const listPlayersWithUsers = `-- name: ListPlayersWithUsers :many
-SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, p.is_active, p.jersey_number, p.created_at, p.updated_at, u.email, u.first_name, u.last_name
+SELECT p.id, p.user_id, p.team_id, p.jersey_number, u.first_name, u.last_name
 FROM players p
 INNER JOIN users u ON p.user_id = u.id
 ORDER BY u.last_name, u.first_name
 `
 
 type ListPlayersWithUsersRow struct {
-	ID                 int64            `json:"id"`
-	UserID             int64            `json:"userId"`
-	TeamID             pgtype.Int8      `json:"teamId"`
-	RegistrationFeeDue pgtype.Numeric   `json:"registrationFeeDue"`
-	IsFullyRegistered  bool             `json:"isFullyRegistered"`
-	IsActive           bool             `json:"isActive"`
-	JerseyNumber       pgtype.Int4      `json:"jerseyNumber"`
-	CreatedAt          pgtype.Timestamp `json:"createdAt"`
-	UpdatedAt          pgtype.Timestamp `json:"updatedAt"`
-	Email              string           `json:"email"`
-	FirstName          string           `json:"firstName"`
-	LastName           string           `json:"lastName"`
+	ID           int64       `json:"id"`
+	UserID       int64       `json:"userId"`
+	TeamID       pgtype.Int8 `json:"teamId"`
+	JerseyNumber pgtype.Int4 `json:"jerseyNumber"`
+	FirstName    string      `json:"firstName"`
+	LastName     string      `json:"lastName"`
 }
 
 // ListPlayersWithUsers
 //
-//	SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered, p.is_active, p.jersey_number, p.created_at, p.updated_at, u.email, u.first_name, u.last_name
+//	SELECT p.id, p.user_id, p.team_id, p.jersey_number, u.first_name, u.last_name
 //	FROM players p
 //	INNER JOIN users u ON p.user_id = u.id
 //	ORDER BY u.last_name, u.first_name
@@ -438,13 +344,7 @@ func (q *Queries) ListPlayersWithUsers(ctx context.Context) ([]ListPlayersWithUs
 			&i.ID,
 			&i.UserID,
 			&i.TeamID,
-			&i.RegistrationFeeDue,
-			&i.IsFullyRegistered,
-			&i.IsActive,
 			&i.JerseyNumber,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Email,
 			&i.FirstName,
 			&i.LastName,
 		); err != nil {
@@ -458,59 +358,115 @@ func (q *Queries) ListPlayersWithUsers(ctx context.Context) ([]ListPlayersWithUs
 	return items, nil
 }
 
+const listPlayersWithUsersDetailed = `-- name: ListPlayersWithUsersDetailed :many
+SELECT p.id, p.user_id, p.team_id, p.fee_remainder, p.jersey_number, p.created_at, p.updated_at,
+u.email, u.phone_number, u.first_name, u.last_name, u.role
+FROM players p
+INNER JOIN users u ON p.user_id = u.id
+ORDER BY u.last_name, u.first_name
+`
+
+type ListPlayersWithUsersDetailedRow struct {
+	ID           int64            `json:"id"`
+	UserID       int64            `json:"userId"`
+	TeamID       pgtype.Int8      `json:"teamId"`
+	FeeRemainder int32            `json:"feeRemainder"`
+	JerseyNumber pgtype.Int4      `json:"jerseyNumber"`
+	CreatedAt    pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt    pgtype.Timestamp `json:"updatedAt"`
+	Email        string           `json:"email"`
+	PhoneNumber  string           `json:"phoneNumber"`
+	FirstName    string           `json:"firstName"`
+	LastName     string           `json:"lastName"`
+	Role         string           `json:"role"`
+}
+
+// ListPlayersWithUsersDetailed
+//
+//	SELECT p.id, p.user_id, p.team_id, p.fee_remainder, p.jersey_number, p.created_at, p.updated_at,
+//	u.email, u.phone_number, u.first_name, u.last_name, u.role
+//	FROM players p
+//	INNER JOIN users u ON p.user_id = u.id
+//	ORDER BY u.last_name, u.first_name
+func (q *Queries) ListPlayersWithUsersDetailed(ctx context.Context) ([]ListPlayersWithUsersDetailedRow, error) {
+	rows, err := q.db.Query(ctx, listPlayersWithUsersDetailed)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlayersWithUsersDetailedRow{}
+	for rows.Next() {
+		var i ListPlayersWithUsersDetailedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.TeamID,
+			&i.FeeRemainder,
+			&i.JerseyNumber,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Email,
+			&i.PhoneNumber,
+			&i.FirstName,
+			&i.LastName,
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePlayer = `-- name: UpdatePlayer :exec
 UPDATE players
-SET team_id = $1, registration_fee_due = $2, is_fully_registered = $3, 
-    is_active = $4, jersey_number = $5, updated_at = NOW()
-WHERE id = $6
+SET team_id = $1, fee_remainder = $2, jersey_number = $3, updated_at = NOW()
+WHERE id = $4
 `
 
 type UpdatePlayerParams struct {
-	TeamID             pgtype.Int8    `json:"teamId"`
-	RegistrationFeeDue pgtype.Numeric `json:"registrationFeeDue"`
-	IsFullyRegistered  bool           `json:"isFullyRegistered"`
-	IsActive           bool           `json:"isActive"`
-	JerseyNumber       pgtype.Int4    `json:"jerseyNumber"`
-	ID                 int64          `json:"id"`
+	TeamID       pgtype.Int8 `json:"teamId"`
+	FeeRemainder int32       `json:"feeRemainder"`
+	JerseyNumber pgtype.Int4 `json:"jerseyNumber"`
+	ID           int64       `json:"id"`
 }
 
 // UpdatePlayer
 //
 //	UPDATE players
-//	SET team_id = $1, registration_fee_due = $2, is_fully_registered = $3,
-//	    is_active = $4, jersey_number = $5, updated_at = NOW()
-//	WHERE id = $6
+//	SET team_id = $1, fee_remainder = $2, jersey_number = $3, updated_at = NOW()
+//	WHERE id = $4
 func (q *Queries) UpdatePlayer(ctx context.Context, arg UpdatePlayerParams) error {
 	_, err := q.db.Exec(ctx, updatePlayer,
 		arg.TeamID,
-		arg.RegistrationFeeDue,
-		arg.IsFullyRegistered,
-		arg.IsActive,
+		arg.FeeRemainder,
 		arg.JerseyNumber,
 		arg.ID,
 	)
 	return err
 }
 
-const updatePlayerRegistrationStatus = `-- name: UpdatePlayerRegistrationStatus :exec
+const updatePlayerRegistrationFee = `-- name: UpdatePlayerRegistrationFee :exec
 UPDATE players
-SET registration_fee_due = $1, is_fully_registered = $2, updated_at = NOW()
-WHERE id = $3
+SET fee_remainder = $1, updated_at = NOW()
+WHERE id = $2
 `
 
-type UpdatePlayerRegistrationStatusParams struct {
-	RegistrationFeeDue pgtype.Numeric `json:"registrationFeeDue"`
-	IsFullyRegistered  bool           `json:"isFullyRegistered"`
-	ID                 int64          `json:"id"`
+type UpdatePlayerRegistrationFeeParams struct {
+	FeeRemainder int32 `json:"feeRemainder"`
+	ID           int64 `json:"id"`
 }
 
-// UpdatePlayerRegistrationStatus
+// UpdatePlayerRegistrationFee
 //
 //	UPDATE players
-//	SET registration_fee_due = $1, is_fully_registered = $2, updated_at = NOW()
-//	WHERE id = $3
-func (q *Queries) UpdatePlayerRegistrationStatus(ctx context.Context, arg UpdatePlayerRegistrationStatusParams) error {
-	_, err := q.db.Exec(ctx, updatePlayerRegistrationStatus, arg.RegistrationFeeDue, arg.IsFullyRegistered, arg.ID)
+//	SET fee_remainder = $1, updated_at = NOW()
+//	WHERE id = $2
+func (q *Queries) UpdatePlayerRegistrationFee(ctx context.Context, arg UpdatePlayerRegistrationFeeParams) error {
+	_, err := q.db.Exec(ctx, updatePlayerRegistrationFee, arg.FeeRemainder, arg.ID)
 	return err
 }
 

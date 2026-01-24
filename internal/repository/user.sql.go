@@ -59,40 +59,6 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 	return err
 }
 
-const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, phone_number, first_name, last_name, role, created_at
-FROM users WHERE email = $1
-`
-
-type GetUserByEmailRow struct {
-	ID          int64            `json:"id"`
-	Email       string           `json:"email"`
-	PhoneNumber string           `json:"phoneNumber"`
-	FirstName   string           `json:"firstName"`
-	LastName    string           `json:"lastName"`
-	Role        string           `json:"role"`
-	CreatedAt   pgtype.Timestamp `json:"createdAt"`
-}
-
-// GetUserByEmail
-//
-//	SELECT id, email, phone_number, first_name, last_name, role, created_at
-//	FROM users WHERE email = $1
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i GetUserByEmailRow
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.PhoneNumber,
-		&i.FirstName,
-		&i.LastName,
-		&i.Role,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const getUserByEmailWithPassword = `-- name: GetUserByEmailWithPassword :one
 SELECT id, email, phone_number, password_hash, first_name, last_name, role, created_at, updated_at
 FROM users WHERE email = $1
@@ -120,7 +86,7 @@ func (q *Queries) GetUserByEmailWithPassword(ctx context.Context, email string) 
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, email, phone_number, first_name, last_name, role, created_at
+SELECT id, email, phone_number, first_name, last_name, role, created_at, updated_at
 FROM users WHERE id = $1
 `
 
@@ -132,11 +98,12 @@ type GetUserByIdRow struct {
 	LastName    string           `json:"lastName"`
 	Role        string           `json:"role"`
 	CreatedAt   pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
 }
 
 // GetUserById
 //
-//	SELECT id, email, phone_number, first_name, last_name, role, created_at
+//	SELECT id, email, phone_number, first_name, last_name, role, created_at, updated_at
 //	FROM users WHERE id = $1
 func (q *Queries) GetUserById(ctx context.Context, id int64) (GetUserByIdRow, error) {
 	row := q.db.QueryRow(ctx, getUserById, id)
@@ -149,12 +116,13 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (GetUserByIdRow, er
 		&i.LastName,
 		&i.Role,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, phone_number, first_name, last_name, role, created_at
+SELECT id, email, phone_number, first_name, last_name, role, created_at, updated_at
 FROM users
 order by id
 `
@@ -167,11 +135,12 @@ type ListUsersRow struct {
 	LastName    string           `json:"lastName"`
 	Role        string           `json:"role"`
 	CreatedAt   pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
 }
 
 // ListUsers
 //
-//	SELECT id, email, phone_number, first_name, last_name, role, created_at
+//	SELECT id, email, phone_number, first_name, last_name, role, created_at, updated_at
 //	FROM users
 //	order by id
 func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
@@ -191,6 +160,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 			&i.LastName,
 			&i.Role,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -236,6 +206,49 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	return err
 }
 
+const updateUserEmail = `-- name: UpdateUserEmail :exec
+UPDATE users
+set email = $1
+where id = $2
+`
+
+type UpdateUserEmailParams struct {
+	Email string `json:"email"`
+	ID    int64  `json:"id"`
+}
+
+// UpdateUserEmail
+//
+//	UPDATE users
+//	set email = $1
+//	where id = $2
+func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
+	_, err := q.db.Exec(ctx, updateUserEmail, arg.Email, arg.ID)
+	return err
+}
+
+const updateUserName = `-- name: UpdateUserName :exec
+UPDATE users
+set first_name = $1, last_name = $2
+WHERE id = $3
+`
+
+type UpdateUserNameParams struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	ID        int64  `json:"id"`
+}
+
+// UpdateUserName
+//
+//	UPDATE users
+//	set first_name = $1, last_name = $2
+//	WHERE id = $3
+func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) error {
+	_, err := q.db.Exec(ctx, updateUserName, arg.FirstName, arg.LastName, arg.ID)
+	return err
+}
+
 const updateUserPassword = `-- name: UpdateUserPassword :exec
 UPDATE users
 SET password_hash = $1, updated_at = $2
@@ -255,5 +268,47 @@ type UpdateUserPasswordParams struct {
 //	WHERE id = $3
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
 	_, err := q.db.Exec(ctx, updateUserPassword, arg.PasswordHash, arg.UpdatedAt, arg.ID)
+	return err
+}
+
+const updateUserPhoneNumber = `-- name: UpdateUserPhoneNumber :exec
+UPDATE users
+set phone_number = $1
+WHERE id = $2
+`
+
+type UpdateUserPhoneNumberParams struct {
+	PhoneNumber string `json:"phoneNumber"`
+	ID          int64  `json:"id"`
+}
+
+// UpdateUserPhoneNumber
+//
+//	UPDATE users
+//	set phone_number = $1
+//	WHERE id = $2
+func (q *Queries) UpdateUserPhoneNumber(ctx context.Context, arg UpdateUserPhoneNumberParams) error {
+	_, err := q.db.Exec(ctx, updateUserPhoneNumber, arg.PhoneNumber, arg.ID)
+	return err
+}
+
+const updateUserRole = `-- name: UpdateUserRole :exec
+UPDATE users
+set role = $1
+WHERE id = $2
+`
+
+type UpdateUserRoleParams struct {
+	Role string `json:"role"`
+	ID   int64  `json:"id"`
+}
+
+// UpdateUserRole
+//
+//	UPDATE users
+//	set role = $1
+//	WHERE id = $2
+func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error {
+	_, err := q.db.Exec(ctx, updateUserRole, arg.Role, arg.ID)
 	return err
 }

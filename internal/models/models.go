@@ -48,91 +48,42 @@ func (rq *UpdateUserRequest) IntoDBModel() repository.UpdateUserParams {
 	}
 }
 
-// Team request models
-type CreateTeamRequest struct {
-	Name          string `json:"name" binding:"required"`
-	Wins          int32  `json:"wins"`
-	Losses        int32  `json:"losses"`
-	Draws         int32  `json:"draws"`
-	PointsFor     int32  `json:"pointsFor"`
-	PointsAgainst int32  `json:"pointsAgainst"`
-}
-
-func (rq *CreateTeamRequest) IntoDBModel() repository.CreateTeamParams {
-	return repository.CreateTeamParams{
-		Name:          rq.Name,
-		Wins:          rq.Wins,
-		Losses:        rq.Losses,
-		Draws:         rq.Draws,
-		PointsFor:     rq.PointsFor,
-		PointsAgainst: rq.PointsAgainst,
-	}
-}
-
-type UpdateTeamRequest struct {
-	ID            int64  `json:"id" binding:"required"`
-	Name          string `json:"name" binding:"required"`
-	Wins          int32  `json:"wins" binding:"required"`
-	Losses        int32  `json:"losses" binding:"required"`
-	Draws         int32  `json:"draws" binding:"required"`
-	PointsFor     int32  `json:"pointsFor" binding:"required"`
-	PointsAgainst int32  `json:"pointsAgainst" binding:"required"`
-}
-
-func (rq *UpdateTeamRequest) IntoDBModel() repository.UpdateTeamParams {
-	return repository.UpdateTeamParams{
-		ID:            rq.ID,
-		Name:          rq.Name,
-		Wins:          rq.Wins,
-		Losses:        rq.Losses,
-		Draws:         rq.Draws,
-		PointsFor:     rq.PointsFor,
-		PointsAgainst: rq.PointsAgainst,
-	}
-}
-
 // Player request models
 // BUG: Using binding:"required" on bool types makes validation fail if a false
 // value is passed, because the validation cannot distinguish between a false and no value because
 // of the zero value of bool.
 
 type CreatePlayerRequest struct {
-	UserID             int64          `json:"userId" binding:"required"`
-	TeamID             pgtype.Int8    `json:"teamId" binding:"required"`
-	RegistrationFeeDue pgtype.Numeric `json:"registrationFeeDue" binding:"required"`
-	IsFullyRegistered  bool           `json:"isFullyRegistered"`
-	IsActive           bool           `json:"isActive"`
-	JerseyNumber       pgtype.Int4    `json:"jerseyNumber" binding:"required"`
+	UserID            int64       `json:"userId" binding:"required"`
+	TeamID            pgtype.Int8 `json:"teamId" binding:"required"`
+	FeeRemainder      int32       `json:"registrationFeeDue" binding:"required"`
+	IsFullyRegistered bool        `json:"isFullyRegistered"`
+	IsActive          bool        `json:"isActive"`
+	JerseyNumber      pgtype.Int4 `json:"jerseyNumber" binding:"required"`
 }
 
 func (rq *CreatePlayerRequest) IntoDBModel() repository.CreatePlayerParams {
 	return repository.CreatePlayerParams{
-		UserID:             rq.UserID,
-		TeamID:             rq.TeamID,
-		RegistrationFeeDue: rq.RegistrationFeeDue,
-		IsFullyRegistered:  rq.IsFullyRegistered,
-		IsActive:           rq.IsActive,
-		JerseyNumber:       rq.JerseyNumber,
+		UserID:       rq.UserID,
+		TeamID:       rq.TeamID,
+		FeeRemainder: rq.FeeRemainder,
+		JerseyNumber: rq.JerseyNumber,
 	}
 }
 
 type UpdatePlayerRequest struct {
-	ID                 int64          `json:"id" binding:"required"`
-	TeamID             pgtype.Int8    `json:"teamId" binding:"required"`
-	RegistrationFeeDue pgtype.Numeric `json:"registrationFeeDue" binding:"required"`
-	IsFullyRegistered  bool           `json:"isFullyRegistered"`
-	IsActive           bool           `json:"isActive"`
-	JerseyNumber       pgtype.Int4    `json:"jerseyNumber" binding:"required"`
+	ID           int64       `json:"id" binding:"required"`
+	TeamID       pgtype.Int8 `json:"teamId" binding:"required"`
+	FeeRemainder int32       `json:"registrationFeeDue" binding:"required"`
+	JerseyNumber pgtype.Int4 `json:"jerseyNumber" binding:"required"`
 }
 
 func (rq *UpdatePlayerRequest) IntoDBModel() repository.UpdatePlayerParams {
 	return repository.UpdatePlayerParams{
-		ID:                 rq.ID,
-		TeamID:             rq.TeamID,
-		RegistrationFeeDue: rq.RegistrationFeeDue,
-		IsFullyRegistered:  rq.IsFullyRegistered,
-		IsActive:           rq.IsActive,
-		JerseyNumber:       rq.JerseyNumber,
+		ID:           rq.ID,
+		TeamID:       rq.TeamID,
+		FeeRemainder: rq.FeeRemainder,
+		JerseyNumber: rq.JerseyNumber,
 	}
 }
 
@@ -148,32 +99,48 @@ func (rq *UpdatePlayerTeamRequest) IntoDBModel() repository.UpdatePlayerTeamPara
 	}
 }
 
-type UpdatePlayerRegistrationStatusRequest struct {
-	ID                 int64          `json:"id" binding:"required"`
-	RegistrationFeeDue pgtype.Numeric `json:"registrationFeeDue" binding:"required"`
-	IsFullyRegistered  bool           `json:"isFullyRegistered"`
+type UpdatePlayerRegistrationFeeRequest struct {
+	ID           int64 `json:"id" binding:"required"`
+	FeeRemainder int32 `json:"feeRemainder" binding:"required"`
 }
 
-func (rq *UpdatePlayerRegistrationStatusRequest) IntoDBModel() repository.UpdatePlayerRegistrationStatusParams {
-	return repository.UpdatePlayerRegistrationStatusParams{
-		ID:                 rq.ID,
-		RegistrationFeeDue: rq.RegistrationFeeDue,
-		IsFullyRegistered:  rq.IsFullyRegistered,
+func (rq *UpdatePlayerRegistrationFeeRequest) IntoDBModel() repository.UpdatePlayerRegistrationFeeParams {
+	return repository.UpdatePlayerRegistrationFeeParams{
+		ID:           rq.ID,
+		FeeRemainder: rq.FeeRemainder,
 	}
 }
 
 // Game request models
-type CreateGameRequest struct {
+type CreateGameWithoutScoreRequest struct {
 	HomeTeamID int64            `json:"homeTeamId" binding:"required"`
 	AwayTeamID int64            `json:"awayTeamId" binding:"required"`
 	GameTime   pgtype.Timestamp `json:"gameTime" binding:"required"`
 }
 
-func (rq *CreateGameRequest) IntoDBModel() repository.CreateGameParams {
-	return repository.CreateGameParams{
+func (rq *CreateGameWithoutScoreRequest) IntoDBModel() repository.CreateGameWithoutScoreParams {
+	return repository.CreateGameWithoutScoreParams{
 		HomeTeamID: rq.HomeTeamID,
 		AwayTeamID: rq.AwayTeamID,
 		GameTime:   rq.GameTime,
+	}
+}
+
+type CreateGameWithScoreRequest struct {
+	HomeTeamID int64            `json:"homeTeamId" binding:"required"`
+	AwayTeamID int64            `json:"awayTeamId" binding:"required"`
+	GameTime   pgtype.Timestamp `json:"gameTime" binding:"required"`
+	HomeScore  int32            `json:"homeScore" binding:"required"`
+	AwayScore  int32            `json:"awayScore" binding:"required"`
+}
+
+func (rq *CreateGameWithScoreRequest) IntoDBModel() repository.CreateGameWithScoreParams {
+	return repository.CreateGameWithScoreParams{
+		HomeTeamID: rq.HomeTeamID,
+		AwayTeamID: rq.AwayTeamID,
+		GameTime:   rq.GameTime,
+		HomeScore:  rq.HomeScore,
+		AwayScore:  rq.AwayScore,
 	}
 }
 
@@ -230,18 +197,18 @@ func (rq *UpdateGameScoreAndStatusRequest) IntoDBModel() repository.UpdateGameSc
 // Payment request models
 
 type CreatePaymentRequest struct {
-	PlayerID int64          `json:"playerId" binding:"required"`
-	StripeID string         `json:"stripeId" binding:"required"`
-	Amount   pgtype.Numeric `json:"amount" binding:"required"`
-	Status   string         `json:"status" binding:"required"`
+	PlayerID int64  `json:"playerId" binding:"required"`
+	StripeID string `json:"stripeId" binding:"required"`
+	Amount   int32  `json:"amount" binding:"required"`
+	Status   string `json:"status" binding:"required"`
 }
 
 func (rq *CreatePaymentRequest) IntoDBModel() repository.CreatePaymentParams {
 	return repository.CreatePaymentParams{
-		PlayerID: rq.PlayerID,
-		StripeID: rq.StripeID,
-		Amount:   rq.Amount,
-		Status:   rq.Status,
+		PlayerID:      rq.PlayerID,
+		TransactionID: rq.StripeID,
+		Amount:        rq.Amount,
+		Status:        rq.Status,
 	}
 }
 
@@ -255,6 +222,15 @@ func (rq *UpdatePaymentStatusRequest) IntoDBModel() repository.UpdatePaymentStat
 		ID:     rq.ID,
 		Status: rq.Status,
 	}
+}
+
+type CreateTeamRequest struct {
+	Name string `json:"name" binding:"required"`
+}
+
+type UpdateTeamRequest struct {
+	Name string `json:"name" binding:"required"`
+	ID   int64
 }
 
 type TeamWithPlayers struct {

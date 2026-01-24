@@ -72,7 +72,7 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 
 	// Check if user already exists
-	_, err := h.queries.GetUserByEmail(c.Request.Context(), req.Email)
+	_, err := h.queries.GetUserByEmailWithPassword(c.Request.Context(), req.Email)
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 		return
@@ -263,7 +263,7 @@ func (h *Handler) RequestPasswordReset(c *gin.Context) {
 	}
 
 	// Find user by email
-	user, err := h.queries.GetUserByEmail(c.Request.Context(), req.Email)
+	user, err := h.queries.GetUserByEmailWithPassword(c.Request.Context(), req.Email)
 	if err != nil {
 		// Don't reveal whether email exists for security
 		c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "If the email exists, a reset link has been sent"}})

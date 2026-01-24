@@ -51,7 +51,7 @@ func (h *Handler) GetUser(c *gin.Context) {
 			return
 		}
 
-		user, err := h.queries.GetUserByEmail(c.Request.Context(), email)
+		user, err := h.queries.GetUserByEmailWithPassword(c.Request.Context(), email)
 		if err != nil {
 			if err == pgx.ErrNoRows {
 				slog.Warn("No users found.")

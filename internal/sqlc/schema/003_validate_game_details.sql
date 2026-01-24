@@ -10,7 +10,6 @@ DECLARE
     game_home_team_id BIGINT;
     game_away_team_id BIGINT;
 BEGIN
-    -- Get the player's team_id
     SELECT team_id INTO player_team_id
     FROM players
     WHERE id = p_player_id;
@@ -20,7 +19,6 @@ BEGIN
         RETURN FALSE;
     END IF;
     
-    -- Get the game's home and away team ids
     SELECT home_team_id, away_team_id INTO game_home_team_id, game_away_team_id
     FROM games
     WHERE id = p_game_id;
@@ -30,7 +28,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
--- Add a CHECK constraint to game_details table
 ALTER TABLE game_details 
 ADD CONSTRAINT player_team_must_play_in_game 
 CHECK (validate_player_team_in_game(player_id, game_id));

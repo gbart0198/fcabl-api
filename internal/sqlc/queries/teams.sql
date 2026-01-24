@@ -6,46 +6,58 @@ SELECT * FROM teams
 ORDER BY name;
 
 -- name: CreateTeam :one
-INSERT INTO teams (name, wins, losses, draws, points_for, points_against, created_at, updated_at)
-values ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+INSERT INTO teams (name, created_at, updated_at)
+values ($1, NOW(), NOW())
 RETURNING *;
 
-
--- name: UpdateTeam :exec
+-- name: UpdateTeamName :exec
 UPDATE teams
-SET name = $1, wins = $2, losses = $3, draws = $4, points_for = $5, points_against = $6, updated_at = NOW()
-WHERE id = $7;
+SET name = $1, updated_at = NOW()
+WHERE id = $2;
 
 -- name: DeleteTeam :exec
 DELETE FROM teams
 WHERE id = $1;
 
--- name: GetTeamWithPlayers :many
-SELECT p.id, p.user_id, p.team_id, p.registration_fee_due, p.is_fully_registered,
-       p.is_active, p.jersey_number, p.created_at, p.updated_at
+-- name: GetTeamWithPlayersDetailed :many
+SELECT t.id, t.name, t.created_at, t.updated_at, p.user_id, u.first_name, u.last_name, u.email, u.phone_number, 
+        p.id as player_id, p.fee_remainder, p.jersey_number
 FROM players p
+INNER JOIN teams t on p.team_id = t.id
+INNER JOIN users u on u.id = p.user_id
 WHERE p.team_id = $1
 ORDER BY p.id;
 
--- name: ListTeamsWithPlayers :many
-SELECT t.id, t.name, t.wins, t.losses, t.draws, t.points_for, t.points_against, t.created_at, t.updated_at, p.jersey_number,
-u.first_name, u.last_name
+-- name: GetTeamWithPlayers :one
+SELECT t.id, t.name, p.user_id, u.first_name, u.last_name, p.id as player_id, p.jersey_number
+FROM players p
+INNER JOIN teams t on p.team_id = t.id
+INNER JOIN users u on u.id = p.user_id
+WHERE p.team_id = $1
+ORDER BY p.id;
+
+-- name: ListTeamsWithPlayersDetailed :many
+SELECT t.id, t.name, t.created_at, t.updated_at, p.user_id, u.first_name, u.last_name, u.email, u.phone_number, 
+        p.id as player_id, p.fee_remainder, p.jersey_number
 FROM teams t
 LEFT JOIN players p on t.id = p.team_id
 LEFT JOIN users u on u.id = p.user_id
 ORDER BY t.id;
 
--- name: GetTeamStats :one
-SELECT t.*,
-       COUNT(p.id) as player_count
+-- name: ListTeamsWithPlayers :many
+SELECT t.id, t.name, p.user_id, u.first_name, u.last_name, p.id as player_id, p.jersey_number
 FROM teams t
-LEFT JOIN players p ON p.team_id = t.id AND p.is_active = true
-WHERE t.id = $1
-GROUP BY t.id;
+LEFT JOIN players p on t.id = p.team_id
+LEFT JOIN users u on u.id = p.user_id
+ORDER BY t.id;
 
--- name: GetTeamStandings :many
-SELECT id, name, wins, losses, draws, points_for, points_against, created_at, updated_at,
-       (wins * 3 + draws) as points,
-       (points_for - points_against) as point_differential
-FROM teams
-ORDER BY points DESC, point_differential DESC, name ASC;
+-- name: ListTeamSchedule :many
+SELECT g.id, g.home_team_id, g.away_team_id, g.home_score, g.away_score,
+       g.game_time, g.created_at, g.updated_at, g.status,
+       ht.name as home_team_name,
+       at.name as away_team_name
+FROM games g
+INNER JOIN teams ht ON g.home_team_id = ht.id
+INNER JOIN teams at ON g.away_team_id = at.id
+WHERE g.home_team_id = $1 OR g.away_team_id = $1
+ORDER BY g.game_time;

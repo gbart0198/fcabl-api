@@ -82,7 +82,7 @@ func (h *Handler) GetGame(c *gin.Context) {
 
 // CreateGame handles POST requests to create a new game
 func (h *Handler) CreateGame(c *gin.Context) {
-	var createGameRequest models.CreateGameRequest
+	var createGameRequest models.CreateGameWithoutScoreRequest
 	if err := c.ShouldBindJSON(&createGameRequest); err != nil {
 		slog.Error("Failed to bind JSON", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -91,7 +91,7 @@ func (h *Handler) CreateGame(c *gin.Context) {
 		return
 	}
 
-	newGame, err := h.queries.CreateGame(c.Request.Context(), createGameRequest.IntoDBModel())
+	newGame, err := h.queries.CreateGameWithoutScore(c.Request.Context(), createGameRequest.IntoDBModel())
 	if err != nil {
 		slog.Error("Failed to create game", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -149,52 +149,6 @@ func (h *Handler) DeleteGame(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
-}
-
-// ListUpcomingGames handles GET requests to list upcoming games
-func (h *Handler) ListUpcomingGames(c *gin.Context) {
-	games, err := h.queries.ListUpcomingGames(c.Request.Context())
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			slog.Warn("No upcoming games found.")
-			c.JSON(http.StatusOK, gin.H{
-				"data": []repository.Game{},
-			})
-		} else {
-			slog.Error("Failed to fetch upcoming games", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to fetch upcoming games",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": games,
-	})
-}
-
-// ListPastGames handles GET requests to list past games
-func (h *Handler) ListPastGames(c *gin.Context) {
-	games, err := h.queries.ListPastGames(c.Request.Context())
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			slog.Warn("No past games found.")
-			c.JSON(http.StatusOK, gin.H{
-				"data": []repository.Game{},
-			})
-		} else {
-			slog.Error("Failed to fetch past games", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to fetch past games",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": games,
-	})
 }
 
 // ListGamesByTeam handles GET requests to list games by team ID
@@ -407,7 +361,7 @@ func (h *Handler) ListTeamSchedule(c *gin.Context) {
 		// game_details where game_id = x and team_id = y
 		homeStats := slices.Collect(func(yield func(models.PlayerGameStats) bool) {
 			for _, detail := range gameDetails {
-				if detail.GameID == game.ID && game.HomeTeamID == detail.TeamID {
+				if detail.GameID == game.ID && game.HomeTeamID == detail.TeamID.Int64 {
 					if !yield(models.PlayerGameStats{
 						PlayerID:        detail.PlayerID,
 						PlayerFirstName: detail.FirstName,
@@ -422,7 +376,7 @@ func (h *Handler) ListTeamSchedule(c *gin.Context) {
 		})
 		awayStats := slices.Collect(func(yield func(models.PlayerGameStats) bool) {
 			for _, detail := range gameDetails {
-				if detail.GameID == game.ID && game.AwayTeamID == detail.TeamID {
+				if detail.GameID == game.ID && game.AwayTeamID == detail.TeamID.Int64 {
 					if !yield(models.PlayerGameStats{
 						PlayerID:        detail.PlayerID,
 						PlayerFirstName: detail.FirstName,
@@ -469,7 +423,7 @@ func (h *Handler) ListAllSchedules(c *gin.Context) {
 		// game_details where game_id = x and team_id = y
 		homeStats := slices.Collect(func(yield func(models.PlayerGameStats) bool) {
 			for _, detail := range gameDetails {
-				if detail.GameID == game.ID && game.HomeTeamID == detail.TeamID {
+				if detail.GameID == game.ID && game.HomeTeamID == detail.TeamID.Int64 {
 					if !yield(models.PlayerGameStats{
 						PlayerID:        detail.PlayerID,
 						PlayerFirstName: detail.FirstName,
@@ -484,7 +438,7 @@ func (h *Handler) ListAllSchedules(c *gin.Context) {
 		})
 		awayStats := slices.Collect(func(yield func(models.PlayerGameStats) bool) {
 			for _, detail := range gameDetails {
-				if detail.GameID == game.ID && game.AwayTeamID == detail.TeamID {
+				if detail.GameID == game.ID && game.AwayTeamID == detail.TeamID.Int64 {
 					if !yield(models.PlayerGameStats{
 						PlayerID:        detail.PlayerID,
 						PlayerFirstName: detail.FirstName,

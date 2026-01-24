@@ -1,13 +1,13 @@
 -- name: CreatePayment :one
-INSERT INTO payments (player_id, stripe_id, amount, status, payment_date)
+INSERT INTO payments (player_id, transaction_id, amount, status, payment_date)
 VALUES ($1, $2, $3, $4, NOW())
 RETURNING *;
 
 -- name: GetPaymentById :one
 SELECT * FROM payments WHERE id = $1;
 
--- name: GetPaymentByStripeId :one
-SELECT * FROM payments WHERE stripe_id = $1;
+-- name: GetPaymentByTransactionId :one
+SELECT * FROM payments WHERE transaction_id = $1;
 
 -- name: ListPayments :many
 SELECT * FROM payments
@@ -40,7 +40,7 @@ INNER JOIN users u ON p.user_id = u.id
 WHERE py.id = $1;
 
 -- name: ListPaymentsWithPlayerInfo :many
-SELECT py.*, u.first_name, u.last_name, u.email
+SELECT py.*, p.user_id, u.first_name, u.last_name, u.email
 FROM payments py
 INNER JOIN players p ON py.player_id = p.id
 INNER JOIN users u ON p.user_id = u.id

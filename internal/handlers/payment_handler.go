@@ -39,11 +39,11 @@ func (h *Handler) ListPayments(c *gin.Context) {
 // Id will take precedence over stripeId.
 func (h *Handler) GetPayment(c *gin.Context) {
 	paymentIDStr := c.Query("id")
-	stripeID := c.Query("stripeId")
-	slog.Info("Starting GetPayment", "paymentIdStr", paymentIDStr, "stripeId", stripeID)
+	transactionId := c.Query("transactionId")
+	slog.Info("Starting GetPayment", "paymentIdStr", paymentIDStr, "stripeId", transactionId)
 
 	if paymentIDStr == "" {
-		if stripeID == "" {
+		if transactionId == "" {
 			slog.Warn("Payment ID and Stripe ID are empty.")
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Please provide either a payment id or stripe id.",
@@ -51,7 +51,7 @@ func (h *Handler) GetPayment(c *gin.Context) {
 			return
 		}
 
-		payment, err := h.queries.GetPaymentByStripeId(c.Request.Context(), stripeID)
+		payment, err := h.queries.GetPaymentByTransactionId(c.Request.Context(), transactionId)
 		if err != nil {
 			if err == pgx.ErrNoRows {
 				slog.Warn("No payment found.")
