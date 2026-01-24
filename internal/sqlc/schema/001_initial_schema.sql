@@ -22,11 +22,6 @@ CREATE TABLE users (
 CREATE TABLE teams (
     id BIGSERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
-    wins INT NOT NULL DEFAULT 0,
-    losses INT NOT NULL DEFAULT 0,
-    draws INT NOT NULL DEFAULT 0,
-    points_for INT NOT NULL DEFAULT 0,
-    points_against INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -38,9 +33,7 @@ CREATE TABLE players (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- 1:1 relationship
     team_id BIGINT REFERENCES teams(id) ON DELETE SET NULL,                -- Many:1 relationship (nullable)
-    registration_fee_due DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    is_fully_registered BOOLEAN NOT NULL DEFAULT FALSE,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    fee_remainder INT NOT NULL DEFAULT 0,
     jersey_number INT, -- Nullable
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
@@ -85,5 +78,5 @@ CREATE TABLE game_details (
   game_id BIGINT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
   player_id BIGINT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
   score INT NOT NULL DEFAULT 0,
-  CONSTRAINT unique_score UNIQUE NULLS NOT DISTINCT (game_id, player_id, score)
+  CONSTRAINT unique_score UNIQUE NULLS NOT DISTINCT (game_id, player_id)
 );
