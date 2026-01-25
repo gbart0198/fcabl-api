@@ -15,6 +15,7 @@ import (
 )
 
 // ListGames handles GET requests to list all games
+// TODO: update to handle optional query params for includes (?includes=teams)
 func (h *Handler) ListGames(c *gin.Context) {
 	games, err := h.queries.ListGames(c.Request.Context())
 	if err != nil {
@@ -38,6 +39,7 @@ func (h *Handler) ListGames(c *gin.Context) {
 }
 
 // GetGame handles GET requests for a single game by ID
+// TODO: update to handle optional query params for includes (?includes=teams)
 func (h *Handler) GetGame(c *gin.Context) {
 	gameIDStr := c.Param("id")
 	slog.Info("Starting GetGame", "gameIdStr", gameIDStr)
@@ -196,7 +198,7 @@ func (h *Handler) ListGamesByTeam(c *gin.Context) {
 
 // GetGameWithTeams handles GET requests for a game with team details
 func (h *Handler) GetGameWithTeams(c *gin.Context) {
-	gameIDStr := c.Query("id")
+	gameIDStr := c.Param("id")
 	slog.Info("Starting GetGameWithTeams", "gameIdStr", gameIDStr)
 
 	if gameIDStr == "" {

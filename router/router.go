@@ -44,44 +44,42 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 
 	publicTeamGroup := public.Group("/team")
 	{
-		publicTeamGroup.GET("/list", h.ListTeams)
-		publicTeamGroup.GET("/", h.GetTeam)
-		publicTeamGroup.GET("/players", h.GetTeamWithPlayers)
-		publicTeamGroup.GET("/players/list", h.ListTeamsWithPlayers)
+		publicTeamGroup.GET("/", h.ListTeams)
+		publicTeamGroup.GET("/:id", h.GetTeam)
+		publicTeamGroup.GET("/:id/schedule", h.ListTeamSchedule)
+		publicTeamGroup.GET("/:id/games", h.ListGamesByTeam)
+		publicTeamGroup.GET("/:id/players", h.ListPlayersByTeam)
+	}
+
+	publicScheduleGroup := public.Group("/schedule")
+	{
+		publicScheduleGroup.GET("/", h.ListAllSchedules)
 	}
 
 	publicGameGroup := public.Group("/game")
 	{
 		publicGameGroup.GET("/:id", h.GetGame)
-		publicGameGroup.GET("/list", h.ListGames)
-		publicGameGroup.GET("/schedule", h.ListTeamSchedule)
-		publicGameGroup.GET("/schedule/list", h.ListAllSchedules)
-		publicGameGroup.GET("/list-with-teams", h.ListGamesWithTeams)
-		publicGameGroup.GET("/with-teams", h.GetGameWithTeams)
-		publicGameGroup.GET("/team", h.ListGamesByTeam)
+		publicGameGroup.GET("/", h.ListGames)
+	}
+
+	publicPlayerGroup := public.Group("/player")
+	{
+		publicPlayerGroup.GET("/", h.ListPlayers)
+		publicPlayerGroup.GET("/:id", h.GetPlayer)
 	}
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware(jwtService))
 	{
-		protected.GET("/user/:id", h.GetUserById)
-		protected.GET("/user", h.GetUserByEmail)
-
-		protectedUserGroup := protected.Group("/user")
-		{
-			protectedUserGroup.GET("/:id", h.GetUserById)
-			protectedUserGroup.GET("/", h.GetUserByEmail)
-
-		}
-
 		admin := protected.Group("")
 		admin.Use(middleware.AdminMiddleware())
 		{
 			adminUserGroup := admin.Group("/user")
 			{
-				adminUserGroup.GET("/list", h.ListUsers)
-				adminUserGroup.POST("", h.CreateUser)
-				adminUserGroup.PUT("", h.UpdateUser)
+				adminUserGroup.GET("/:id", h.GetUserById)
+				adminUserGroup.GET("/", h.ListUsers)
+				adminUserGroup.POST("/", h.CreateUser)
+				adminUserGroup.PATCH("/:id", h.UpdateUser)
 				adminUserGroup.DELETE("/:id", h.DeleteUser)
 
 			}
@@ -89,45 +87,31 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 			adminTeamGroup := admin.Group("/team")
 			{
 				adminTeamGroup.POST("/", h.CreateTeam)
-				adminTeamGroup.PUT("/", h.UpdateTeam)
+				adminTeamGroup.PATCH("/:id", h.UpdateTeam)
 				adminTeamGroup.DELETE("/:id", h.DeleteTeam)
 			}
 
 			adminPlayerGroup := admin.Group("/player")
 			{
-				adminPlayerGroup.GET("/list", h.ListPlayers)
-				adminPlayerGroup.GET("/team", h.ListPlayersByTeam)
-				adminPlayerGroup.GET("/with-user", h.GetPlayerWithUser)
-				adminPlayerGroup.GET("/with-team", h.GetPlayerWithTeam)
-				adminPlayerGroup.GET("/list-with-users", h.ListPlayersWithUsers)
-				adminPlayerGroup.GET("/", h.GetPlayer) // update to use two routes, one with /:id and one with query param for userId
 				adminPlayerGroup.POST("/", h.CreatePlayer)
-				adminPlayerGroup.PUT("/", h.UpdatePlayer)
-				adminPlayerGroup.PATCH("/team", h.UpdatePlayerTeam)
-				adminPlayerGroup.PATCH("/registration", h.UpdatePlayerRegistrationStatus)
+				adminPlayerGroup.PATCH("/:id", h.UpdatePlayer)
 				adminPlayerGroup.DELETE("/:id", h.DeletePlayer)
+				adminPlayerGroup.GET("/:id/payment-summary", h.GetPlayerPaymentSummary)
 			}
 
 			adminGameGroup := admin.Group("/game")
 			{
 				adminGameGroup.POST("/", h.CreateGame)
-				adminGameGroup.PUT("/", h.UpdateGame)
-				adminGameGroup.PUT("/status", h.UpdateGameScoreAndStatus)
-				adminGameGroup.PATCH("/time", h.UpdateGameTime)
+				adminGameGroup.PATCH("/:id", h.UpdateGame)
 				adminGameGroup.DELETE("/:id", h.DeleteGame)
 			}
 
 			adminPaymentGroup := admin.Group("/payment")
 			{
-				adminPaymentGroup.GET("/list", h.ListPayments)
-				adminPaymentGroup.GET("/player", h.ListPaymentsByPlayer)
-				adminPaymentGroup.GET("/status-filter", h.ListPaymentsByStatus)
-				adminPaymentGroup.GET("/with-player", h.GetPaymentWithPlayer)
-				adminPaymentGroup.GET("/list-with-players", h.ListPaymentsWithPlayerInfo)
-				adminPaymentGroup.GET("/summary", h.GetPlayerPaymentSummary)
-				adminPaymentGroup.GET("/", h.GetPayment)
+				adminPaymentGroup.GET("/", h.ListPayments)
+				adminPaymentGroup.GET("/:id", h.GetPayment)
 				adminPaymentGroup.POST("/", h.CreatePayment)
-				adminPaymentGroup.PATCH("/status", h.UpdatePaymentStatus)
+				adminPaymentGroup.PATCH("/:id", h.UpdatePayment)
 				adminPaymentGroup.DELETE("/:id", h.DeletePayment)
 			}
 		}

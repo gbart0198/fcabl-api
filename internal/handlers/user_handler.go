@@ -13,6 +13,7 @@ import (
 )
 
 // ListUsers handles GET requests to list all users
+// TODO: Update to handle ?email query parameter that fetches user by email
 func (h *Handler) ListUsers(c *gin.Context) {
 	users, err := h.queries.ListUsers(c.Request.Context())
 	if err != nil {

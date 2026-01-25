@@ -13,6 +13,7 @@ import (
 )
 
 // ListTeams handles GET requests to list all teams
+// TODO: update to handle optional query params for includes (?includes=players,games)
 func (h *Handler) ListTeams(c *gin.Context) {
 	teams, err := h.queries.ListTeams(c.Request.Context())
 	if err != nil {
@@ -36,8 +37,9 @@ func (h *Handler) ListTeams(c *gin.Context) {
 }
 
 // GetTeam handles GET requests for a single team by ID
+// TODO: Update this to handle optional query param include (to include players, games, etc.)
 func (h *Handler) GetTeam(c *gin.Context) {
-	teamID, err := getIntFromQuery("id", c)
+	teamID, err := getIntFromQuery("id", c) // TODO: update this to use Param instead of query.
 	if err != nil {
 		if errors.Is(err, ErrParamEmpty) {
 			slog.Error(err.Error())
@@ -100,6 +102,7 @@ func (h *Handler) CreateTeam(c *gin.Context) {
 }
 
 // UpdateTeam handles PUT requests to update a team
+// TODO: Update handler to determine what values are being updated in the body
 func (h *Handler) UpdateTeam(c *gin.Context) {
 	var updateTeamRequest models.UpdateTeamRequest
 	if err := c.ShouldBindJSON(&updateTeamRequest); err != nil {

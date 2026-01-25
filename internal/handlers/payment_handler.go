@@ -12,6 +12,12 @@ import (
 )
 
 // ListPayments handles GET requests to list all payments
+// TODO: Update to account for all of the following use-cases:
+// adminPaymentGroup.GET("/player", h.ListPaymentsByPlayer)
+// adminPaymentGroup.GET("/status-filter", h.ListPaymentsByStatus)
+// adminPaymentGroup.GET("/with-player", h.GetPaymentWithPlayer)
+// adminPaymentGroup.GET("/list-with-players", h.ListPaymentsWithPlayerInfo)
+
 func (h *Handler) ListPayments(c *gin.Context) {
 	payments, err := h.queries.ListPayments(c.Request.Context())
 	if err != nil {
@@ -127,8 +133,9 @@ func (h *Handler) CreatePayment(c *gin.Context) {
 	})
 }
 
-// UpdatePaymentStatus handles PATCH requests to update a payment's status
-func (h *Handler) UpdatePaymentStatus(c *gin.Context) {
+// UpdatePayment handles PATCH requests to update a payment's status
+// TODO: Update this to handle patch updates to status, amount
+func (h *Handler) UpdatePayment(c *gin.Context) {
 	var updatePaymentStatusRequest models.UpdatePaymentStatusRequest
 	if err := c.ShouldBindJSON(&updatePaymentStatusRequest); err != nil {
 		slog.Error("Failed to bind JSON", "error", err)
@@ -318,7 +325,7 @@ func (h *Handler) ListPaymentsWithPlayerInfo(c *gin.Context) {
 
 // GetPlayerPaymentSummary handles GET requests to get a player's payment summary
 func (h *Handler) GetPlayerPaymentSummary(c *gin.Context) {
-	playerIDStr := c.Query("playerId")
+	playerIDStr := c.Query("playerId") // get from route params instead
 	slog.Info("Starting GetPlayerPaymentSummary", "playerIdStr", playerIDStr)
 
 	if playerIDStr == "" {

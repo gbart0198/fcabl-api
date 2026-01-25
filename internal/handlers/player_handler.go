@@ -38,6 +38,7 @@ func (h *Handler) ListPlayers(c *gin.Context) {
 // GetPlayer handles GET requests for a single player.
 // Query parameters must be used, either id or userId.
 // Id will take precedence over userId.
+// update to account for all includes query parameters
 func (h *Handler) GetPlayer(c *gin.Context) {
 	// TODO: Update query object to pull back user information like name, email, etc.
 	playerIDStr := c.Query("id")
@@ -186,7 +187,7 @@ func (h *Handler) DeletePlayer(c *gin.Context) {
 
 // ListPlayersByTeam handles GET requests to list players by team ID
 func (h *Handler) ListPlayersByTeam(c *gin.Context) {
-	teamIDStr := c.Query("teamId")
+	teamIDStr := c.Query("teamId") // update to pull from route params
 	slog.Info("Starting ListPlayersByTeam", "teamIdStr", teamIDStr)
 
 	if teamIDStr == "" {
