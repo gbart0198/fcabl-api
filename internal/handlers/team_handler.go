@@ -2,10 +2,8 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/gbart/fcabl-api/internal/models"
 	"github.com/gbart/fcabl-api/internal/repository"
@@ -112,6 +110,24 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 		return
 	}
 
+	teamId, err := getIntFromQuery("id", c)
+	if err != nil {
+		if errors.Is(err, ErrParamEmpty) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Param id is required.",
+			})
+		} else if errors.Is(err, ErrParamParse) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Failed to parse id. Please provide a valid id.",
+			})
+		}
+		return
+	}
+
+	updateTeamRequest.ID = teamId
+
 	if err := h.queries.UpdateTeamName(c.Request.Context(), updateTeamRequest.IntoDBModel()); err != nil {
 		slog.Error("Failed to update team", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -150,68 +166,6 @@ func (h *Handler) DeleteTeam(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
-}
-
-// GetTeamStandings handles GET requests for team standings
-func (h *Handler) GetTeamStandings(c *gin.Context) {
-	standings, err := h.queries.GetTeamStandings(c.Request.Context())
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			slog.Warn("No team standings found.")
-			c.JSON(http.StatusOK, gin.H{
-				"data": []repository.GetTeamStandingsRow{},
-			})
-		} else {
-			slog.Error("Failed to fetch team standings", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to fetch team standings",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": standings,
-	})
-}
-
-// GetTeamStats handles GET requests for team statistics by ID
-func (h *Handler) GetTeamStats(c *gin.Context) {
-	teamID, err := getIntFromQuery("id", c)
-	if err != nil {
-		if errors.Is(err, ErrParamEmpty) {
-			slog.Error(err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Param id is required.",
-			})
-		} else if errors.Is(err, ErrParamParse) {
-			slog.Error(err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Failed to parse id. Please provide a valid id.",
-			})
-		}
-		return
-	}
-
-	stats, err := h.queries.GetTeamStats(c.Request.Context(), teamID)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			slog.Warn("No team stats found.")
-			c.JSON(http.StatusOK, gin.H{
-				"data": repository.GetTeamStatsRow{},
-			})
-		} else {
-			slog.Error("Error retrieving team stats", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Error retrieving team stats.",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": stats,
-	})
 }
 
 // GetTeamWithPlayers handles GET requests for team with its players
@@ -275,16 +229,9 @@ func (h *Handler) ListTeamsWithPlayers(c *gin.Context) {
 		if _, exists := teamMap[row.ID]; !exists {
 			// Create new team entry
 			teamMap[row.ID] = &models.TeamWithPlayers{
-				ID:            row.ID,
-				Name:          row.Name,
-				Wins:          row.Wins,
-				Losses:        row.Losses,
-				Draws:         row.Draws,
-				PointsFor:     row.PointsFor,
-				PointsAgainst: row.PointsAgainst,
-				CreatedAt:     row.CreatedAt,
-				UpdatedAt:     row.UpdatedAt,
-				Players:       []models.PlayerSimpleDetails{},
+				ID:      row.ID,
+				Name:    row.Name,
+				Players: []models.PlayerSimpleDetails{},
 			}
 		}
 
@@ -307,25 +254,4 @@ func (h *Handler) ListTeamsWithPlayers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": teams,
 	})
-}
-
-var (
-	ErrParamEmpty = errors.New("query parameter is empty")
-	ErrParamParse = errors.New("failed to parse query parameter")
-)
-
-func getIntFromQuery(paramName string, c *gin.Context) (int64, error) {
-	paramValue := c.Query(paramName)
-	slog.Info("Starting GetTeamWithPlayers", "teamIdStr", paramValue)
-
-	if paramValue == "" {
-		return 0, fmt.Errorf("%w: parameter '%s' is empty", ErrParamEmpty, paramName)
-	}
-
-	intValue, err := strconv.ParseInt(paramValue, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("%w: parameter '%s' value '%s' is not a valid integer.", ErrParamParse, paramName, paramValue)
-	}
-
-	return intValue, nil
 }

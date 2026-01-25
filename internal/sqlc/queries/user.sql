@@ -49,3 +49,7 @@ where id = $1;
 -- name: GetUserByEmailWithPassword :one
 SELECT id, email, phone_number, password_hash, first_name, last_name, role, created_at, updated_at
 FROM users WHERE email = $1;
+
+-- name: GetUserByEmail :one
+SELECT id, email, phone_number, first_name, last_name, role, created_at, updated_at
+FROM users WHERE email = $1;

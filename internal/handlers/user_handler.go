@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -34,72 +35,78 @@ func (h *Handler) ListUsers(c *gin.Context) {
 	})
 }
 
-// GetUser handles GET requests for a single user.
+func (h *Handler) GetUserByEmail(c *gin.Context) {
+	email := c.Query("email")
+	if email == "" {
+		slog.Warn("Email param is required")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Please provide either a user id or email.",
+		})
+		return
+	}
+	user, err := h.queries.GetUserByEmail(c.Request.Context(), email)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			slog.Warn("No users found.")
+			c.JSON(http.StatusOK, gin.H{
+				"data": []repository.User{},
+			})
+		} else {
+			slog.Error("Error retreiving user", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Error retreiving user.",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": user,
+	})
+}
+
+// GetUserById handles GET requests for a single user.
 // Query parameters must be used, either id or email.
 // Id will take precedence over email.
-func (h *Handler) GetUser(c *gin.Context) {
-	userIDStr := c.Query("id")
-	email := c.Query("email")
-	slog.Info("Starting GetUser", "userIdStr", userIDStr, "email", email)
+func (h *Handler) GetUserById(c *gin.Context) {
+	userID, err := getIntFromQuery("id", c)
 
-	if userIDStr == "" {
-		if email == "" {
-			slog.Warn("User Id and email are empty.")
+	if err != nil {
+		if errors.Is(err, ErrParamEmpty) {
+			slog.Error(err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Please provide either a user id or email.",
+				"error": "Please provide a user id.",
 			})
-			return
-		}
-
-		user, err := h.queries.GetUserByEmailWithPassword(c.Request.Context(), email)
-		if err != nil {
-			if err == pgx.ErrNoRows {
-				slog.Warn("No users found.")
-				c.JSON(http.StatusOK, gin.H{
-					"data": []repository.User{},
-				})
-			} else {
-				slog.Error("Error retreiving user", "error", err)
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Error retreiving user.",
-				})
-			}
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"data": user,
-		})
-	} else {
-		userID, err := strconv.ParseInt(userIDStr, 10, 64)
-		if err != nil {
-			slog.Error("Failed to parse user id", "error", err)
+		} else if errors.Is(err, ErrParamParse) {
+			slog.Error(err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Failed to parse user id. Please provide a valid id.",
 			})
 		}
 
-		user, err := h.queries.GetUserById(c.Request.Context(), userID)
-		if err != nil {
-			if err == pgx.ErrNoRows {
-				slog.Warn("No users found.")
-				c.JSON(http.StatusOK, gin.H{
-					"data": []repository.User{},
-				})
-			} else {
-				slog.Error("Error retreiving user", "error", err)
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Error retrieving user.",
-				})
-			}
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"data": user,
-		})
-
+		return
 	}
+
+	user, err := h.queries.GetUserById(c.Request.Context(), userID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			slog.Warn("No users found.")
+			c.JSON(http.StatusOK, gin.H{
+				"data": []repository.User{},
+			})
+		} else {
+			slog.Error("Error retreiving user", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Error retrieving user.",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": user,
+	})
+
 }
 
 func (h *Handler) CreateUser(c *gin.Context) {

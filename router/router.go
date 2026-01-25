@@ -44,14 +44,12 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 
 	// Public game/team routes
 	r.GET("/api/team/list", h.ListTeams)
-	r.GET("/api/team/standings", h.GetTeamStandings)
 	r.GET("/api/team", h.GetTeam)
 	r.GET("/api/game/list", h.ListGames)
 	r.GET("/api/game/schedule", h.ListTeamSchedule)
 	r.GET("/api/game/schedule/list", h.ListAllSchedules)
 	r.GET("/api/game/list-with-teams", h.ListGamesWithTeams)
 	r.GET("/api/game", h.GetGame)
-	r.GET("/api/team/stats", h.GetTeamStats)
 	r.GET("/api/team/players", h.GetTeamWithPlayers)
 	r.GET("/api/team/players/list", h.ListTeamsWithPlayers)
 	r.GET("/api/game/with-teams", h.GetGameWithTeams)
@@ -62,7 +60,8 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 	protected.Use(middleware.AuthMiddleware(jwtService))
 	{
 		// User routes
-		protected.GET("/user", h.GetUser)
+		protected.GET("/user/:id", h.GetUserById)
+		protected.GET("/user", h.GetUserByEmail)
 
 		// Admin-only routes
 		admin := protected.Group("")

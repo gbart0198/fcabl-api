@@ -59,6 +59,42 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 	return err
 }
 
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, phone_number, first_name, last_name, role, created_at, updated_at
+FROM users WHERE email = $1
+`
+
+type GetUserByEmailRow struct {
+	ID          int64            `json:"id"`
+	Email       string           `json:"email"`
+	PhoneNumber string           `json:"phoneNumber"`
+	FirstName   string           `json:"firstName"`
+	LastName    string           `json:"lastName"`
+	Role        string           `json:"role"`
+	CreatedAt   pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
+}
+
+// GetUserByEmail
+//
+//	SELECT id, email, phone_number, first_name, last_name, role, created_at, updated_at
+//	FROM users WHERE email = $1
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i GetUserByEmailRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.FirstName,
+		&i.LastName,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByEmailWithPassword = `-- name: GetUserByEmailWithPassword :one
 SELECT id, email, phone_number, password_hash, first_name, last_name, role, created_at, updated_at
 FROM users WHERE email = $1

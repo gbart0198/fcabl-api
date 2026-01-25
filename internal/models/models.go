@@ -48,18 +48,11 @@ func (rq *UpdateUserRequest) IntoDBModel() repository.UpdateUserParams {
 	}
 }
 
-// Player request models
-// BUG: Using binding:"required" on bool types makes validation fail if a false
-// value is passed, because the validation cannot distinguish between a false and no value because
-// of the zero value of bool.
-
 type CreatePlayerRequest struct {
-	UserID            int64       `json:"userId" binding:"required"`
-	TeamID            pgtype.Int8 `json:"teamId" binding:"required"`
-	FeeRemainder      int32       `json:"registrationFeeDue" binding:"required"`
-	IsFullyRegistered bool        `json:"isFullyRegistered"`
-	IsActive          bool        `json:"isActive"`
-	JerseyNumber      pgtype.Int4 `json:"jerseyNumber" binding:"required"`
+	UserID       int64       `json:"userId" binding:"required"`
+	TeamID       pgtype.Int8 `json:"teamId" binding:"required"`
+	FeeRemainder int32       `json:"feeRemainder" binding:"required"`
+	JerseyNumber pgtype.Int4 `json:"jerseyNumber" binding:"required"`
 }
 
 func (rq *CreatePlayerRequest) IntoDBModel() repository.CreatePlayerParams {
@@ -231,6 +224,13 @@ type CreateTeamRequest struct {
 type UpdateTeamRequest struct {
 	Name string `json:"name" binding:"required"`
 	ID   int64
+}
+
+func (rq *UpdateTeamRequest) IntoDBModel() repository.UpdateTeamNameParams {
+	return repository.UpdateTeamNameParams{
+		ID:   rq.ID,
+		Name: rq.Name,
+	}
 }
 
 type TeamWithPlayers struct {
