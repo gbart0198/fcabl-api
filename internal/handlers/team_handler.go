@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -37,23 +39,19 @@ func (h *Handler) ListTeams(c *gin.Context) {
 
 // GetTeam handles GET requests for a single team by ID
 func (h *Handler) GetTeam(c *gin.Context) {
-	teamIDStr := c.Query("id")
-	slog.Info("Starting GetTeam", "teamIdStr", teamIDStr)
-
-	if teamIDStr == "" {
-		slog.Warn("Team ID is empty.")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Please provide a team id.",
-		})
-		return
-	}
-
-	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
+	teamID, err := getIntFromQuery("id", c)
 	if err != nil {
-		slog.Error("Failed to parse team id", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to parse team id. Please provide a valid id.",
-		})
+		if errors.Is(err, ErrParamEmpty) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Param id is required.",
+			})
+		} else if errors.Is(err, ErrParamParse) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Failed to parse id. Please provide a valid id.",
+			})
+		}
 		return
 	}
 
@@ -114,7 +112,6 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 		return
 	}
 
-
 	if err := h.queries.UpdateTeamName(c.Request.Context(), updateTeamRequest.IntoDBModel()); err != nil {
 		slog.Error("Failed to update team", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -128,14 +125,19 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 
 // DeleteTeam handles DELETE requests to delete a team
 func (h *Handler) DeleteTeam(c *gin.Context) {
-	teamIDStr := c.Param("id")
-
-	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
+	teamID, err := getIntFromQuery("id", c)
 	if err != nil {
-		slog.Error("Failed to parse team id", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to parse team id. Please provide a valid id.",
-		})
+		if errors.Is(err, ErrParamEmpty) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Param id is required.",
+			})
+		} else if errors.Is(err, ErrParamParse) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Failed to parse id. Please provide a valid id.",
+			})
+		}
 		return
 	}
 
@@ -175,23 +177,19 @@ func (h *Handler) GetTeamStandings(c *gin.Context) {
 
 // GetTeamStats handles GET requests for team statistics by ID
 func (h *Handler) GetTeamStats(c *gin.Context) {
-	teamIDStr := c.Query("id")
-	slog.Info("Starting GetTeamStats", "teamIdStr", teamIDStr)
-
-	if teamIDStr == "" {
-		slog.Warn("Team ID is empty.")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Please provide a team id.",
-		})
-		return
-	}
-
-	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
+	teamID, err := getIntFromQuery("id", c)
 	if err != nil {
-		slog.Error("Failed to parse team id", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to parse team id. Please provide a valid id.",
-		})
+		if errors.Is(err, ErrParamEmpty) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Param id is required.",
+			})
+		} else if errors.Is(err, ErrParamParse) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Failed to parse id. Please provide a valid id.",
+			})
+		}
 		return
 	}
 
@@ -218,26 +216,21 @@ func (h *Handler) GetTeamStats(c *gin.Context) {
 
 // GetTeamWithPlayers handles GET requests for team with its players
 func (h *Handler) GetTeamWithPlayers(c *gin.Context) {
-	teamIDStr := c.Query("id")
-	slog.Info("Starting GetTeamWithPlayers", "teamIdStr", teamIDStr)
-
-	if teamIDStr == "" {
-		slog.Warn("Team ID is empty.")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Please provide a team id.",
-		})
-		return
-	}
-
-	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
+	teamID, err := getIntFromQuery("id", c)
 	if err != nil {
-		slog.Error("Failed to parse team id", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to parse team id. Please provide a valid id.",
-		})
+		if errors.Is(err, ErrParamEmpty) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Param id is required.",
+			})
+		} else if errors.Is(err, ErrParamParse) {
+			slog.Error(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Failed to parse id. Please provide a valid id.",
+			})
+		}
 		return
 	}
-
 	// Convert int64 to pgtype.Int8
 	var teamIDPgType pgtype.Int8
 	teamIDPgType.Scan(teamID)
@@ -316,24 +309,23 @@ func (h *Handler) ListTeamsWithPlayers(c *gin.Context) {
 	})
 }
 
-func getTeamIdFromParams(c *gin.Context) (int, error) {
-	teamIDStr := c.Query("id")
-	slog.Info("Starting GetTeamWithPlayers", "teamIdStr", teamIDStr)
+var (
+	ErrParamEmpty = errors.New("query parameter is empty")
+	ErrParamParse = errors.New("failed to parse query parameter")
+)
 
-	if teamIDStr == "" {
-		slog.Warn("Team ID is empty.")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Please provide a team id.",
-		})
-		return ()
+func getIntFromQuery(paramName string, c *gin.Context) (int64, error) {
+	paramValue := c.Query(paramName)
+	slog.Info("Starting GetTeamWithPlayers", "teamIdStr", paramValue)
+
+	if paramValue == "" {
+		return 0, fmt.Errorf("%w: parameter '%s' is empty", ErrParamEmpty, paramName)
 	}
 
-	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
+	intValue, err := strconv.ParseInt(paramValue, 10, 64)
 	if err != nil {
-		slog.Error("Failed to parse team id", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to parse team id. Please provide a valid id.",
-		})
-		return
+		return 0, fmt.Errorf("%w: parameter '%s' value '%s' is not a valid integer.", ErrParamParse, paramName, paramValue)
 	}
+
+	return intValue, nil
 }

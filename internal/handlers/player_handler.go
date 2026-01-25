@@ -184,29 +184,6 @@ func (h *Handler) DeletePlayer(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ListActivePlayers handles GET requests to list all active players
-func (h *Handler) ListActivePlayers(c *gin.Context) {
-	players, err := h.queries.ListActivePlayers(c.Request.Context())
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			slog.Warn("No active players found.")
-			c.JSON(http.StatusOK, gin.H{
-				"data": []repository.Player{},
-			})
-		} else {
-			slog.Error("Failed to fetch active players", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to fetch active players",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": players,
-	})
-}
-
 // ListPlayersByTeam handles GET requests to list players by team ID
 func (h *Handler) ListPlayersByTeam(c *gin.Context) {
 	teamIDStr := c.Query("teamId")
@@ -254,29 +231,6 @@ func (h *Handler) ListPlayersByTeam(c *gin.Context) {
 	})
 }
 
-// ListFreeAgents handles GET requests to list players without teams
-func (h *Handler) ListFreeAgents(c *gin.Context) {
-	freeAgents, err := h.queries.ListFreeAgents(c.Request.Context())
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			slog.Warn("No free agents found.")
-			c.JSON(http.StatusOK, gin.H{
-				"data": []repository.ListFreeAgentsRow{},
-			})
-		} else {
-			slog.Error("Failed to fetch free agents", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to fetch free agents",
-			})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": freeAgents,
-	})
-}
-
 // GetPlayerWithUser handles GET requests for a player with user details
 func (h *Handler) GetPlayerWithUser(c *gin.Context) {
 	playerIDStr := c.Query("id")
@@ -299,12 +253,12 @@ func (h *Handler) GetPlayerWithUser(c *gin.Context) {
 		return
 	}
 
-	player, err := h.queries.GetPlayerWithUser(c.Request.Context(), playerID)
+	player, err := h.queries.GetPlayerWithUserInfo(c.Request.Context(), playerID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			slog.Warn("No player found.")
 			c.JSON(http.StatusOK, gin.H{
-				"data": repository.GetPlayerWithUserRow{},
+				"data": repository.GetPlayerWithUserInfoRow{},
 			})
 		} else {
 			slog.Error("Error retrieving player with user", "error", err)
@@ -342,12 +296,12 @@ func (h *Handler) GetPlayerWithTeam(c *gin.Context) {
 		return
 	}
 
-	player, err := h.queries.GetPlayerWithTeam(c.Request.Context(), playerID)
+	player, err := h.queries.GetPlayerWithUserAndTeamInfo(c.Request.Context(), playerID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			slog.Warn("No player found.")
 			c.JSON(http.StatusOK, gin.H{
-				"data": repository.GetPlayerWithTeamRow{},
+				"data": repository.GetPlayerWithUserAndTeamInfoRow{},
 			})
 		} else {
 			slog.Error("Error retrieving player with team", "error", err)
@@ -410,8 +364,8 @@ func (h *Handler) UpdatePlayerTeam(c *gin.Context) {
 
 // UpdatePlayerRegistrationStatus handles PATCH requests to update a player's registration status
 func (h *Handler) UpdatePlayerRegistrationStatus(c *gin.Context) {
-	var updatePlayerRegistrationStatusRequest models.UpdatePlayerRegistrationStatusRequest
-	if err := c.ShouldBindJSON(&updatePlayerRegistrationStatusRequest); err != nil {
+	var updatePlayerRegistrationFeeRequest models.UpdatePlayerRegistrationFeeRequest
+	if err := c.ShouldBindJSON(&updatePlayerRegistrationFeeRequest); err != nil {
 		slog.Error("Failed to bind JSON", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid parameters for updating player registration status.",
@@ -419,7 +373,7 @@ func (h *Handler) UpdatePlayerRegistrationStatus(c *gin.Context) {
 		return
 	}
 
-	if err := h.queries.UpdatePlayerRegistrationStatus(c.Request.Context(), updatePlayerRegistrationStatusRequest.IntoDBModel()); err != nil {
+	if err := h.queries.UpdatePlayerRegistrationFee(c.Request.Context(), updatePlayerRegistrationFeeRequest.IntoDBModel()); err != nil {
 		slog.Error("Failed to update player registration status", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update player registration status.",

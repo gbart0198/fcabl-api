@@ -47,8 +47,6 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 	r.GET("/api/team/standings", h.GetTeamStandings)
 	r.GET("/api/team", h.GetTeam)
 	r.GET("/api/game/list", h.ListGames)
-	r.GET("/api/game/upcoming", h.ListUpcomingGames)
-	r.GET("/api/game/past", h.ListPastGames)
 	r.GET("/api/game/schedule", h.ListTeamSchedule)
 	r.GET("/api/game/schedule/list", h.ListAllSchedules)
 	r.GET("/api/game/list-with-teams", h.ListGamesWithTeams)
@@ -83,9 +81,7 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 
 			// Player management
 			admin.GET("/player/list", h.ListPlayers)
-			admin.GET("/player/active", h.ListActivePlayers)
 			admin.GET("/player/team", h.ListPlayersByTeam)
-			admin.GET("/player/free-agents", h.ListFreeAgents)
 			admin.GET("/player/with-user", h.GetPlayerWithUser)
 			admin.GET("/player/with-team", h.GetPlayerWithTeam)
 			admin.GET("/player/list-with-users", h.ListPlayersWithUsers)
