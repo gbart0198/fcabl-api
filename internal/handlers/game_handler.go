@@ -39,7 +39,7 @@ func (h *Handler) ListGames(c *gin.Context) {
 
 // GetGame handles GET requests for a single game by ID
 func (h *Handler) GetGame(c *gin.Context) {
-	gameIDStr := c.Query("id")
+	gameIDStr := c.Param("id")
 	slog.Info("Starting GetGame", "gameIdStr", gameIDStr)
 
 	if gameIDStr == "" {
