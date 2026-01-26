@@ -7,19 +7,19 @@ import (
 )
 
 type CreateUserRequest struct {
-	Email        string `json:"email" binding:"required"`
-	PhoneNumber  string `json:"phoneNumber" binding:"required"`
-	PasswordHash string `json:"passwordHash" binding:"required"`
-	FirstName    string `json:"firstName" binding:"required"`
-	LastName     string `json:"lastName" binding:"required"`
-	Role         string `json:"role" binding:"required"`
+	Email       string `json:"email" binding:"required"`
+	PhoneNumber string `json:"phoneNumber" binding:"required"`
+	Password    string `json:"password" binding:"required"`
+	FirstName   string `json:"firstName" binding:"required"`
+	LastName    string `json:"lastName" binding:"required"`
+	Role        string `json:"role" binding:"required"`
 }
 
-func (rq *CreateUserRequest) IntoDBModel() repository.CreateUserParams {
+func (rq *CreateUserRequest) IntoDBModel(passwordHash string) repository.CreateUserParams {
 	return repository.CreateUserParams{
 		Email:        rq.Email,
 		PhoneNumber:  rq.PhoneNumber,
-		PasswordHash: rq.PasswordHash,
+		PasswordHash: passwordHash,
 		FirstName:    rq.FirstName,
 		LastName:     rq.LastName,
 		Role:         rq.Role,
@@ -27,24 +27,22 @@ func (rq *CreateUserRequest) IntoDBModel() repository.CreateUserParams {
 }
 
 type UpdateUserRequest struct {
-	Email       string           `json:"email" binding:"required"`
-	PhoneNumber string           `json:"phoneNumber" binding:"required"`
-	FirstName   string           `json:"firstName" binding:"required"`
-	LastName    string           `json:"lastName" binding:"required"`
-	Role        string           `json:"role" binding:"required"`
-	UpdatedAt   pgtype.Timestamp `json:"updatedAt" binding:"required"`
-	ID          int64            `json:"id" binding:"required"`
+	Email       *string `json:"email,omitempty" binding:"omitempty"`
+	PhoneNumber *string `json:"phoneNumber,omitempty" binding:"omitempty"`
+	FirstName   *string `json:"firstName,omitempty" binding:"omitempty"`
+	LastName    *string `json:"lastName,omitempty" binding:"omitempty"`
+	Role        *string `json:"role,omitempty" binding:"omitempty"`
+	Password    *string `json:"password,omitempty" binding:"omitempty"`
 }
 
-func (rq *UpdateUserRequest) IntoDBModel() repository.UpdateUserParams {
+func (rq *UpdateUserRequest) IntoDBModel(id int64) repository.UpdateUserParams {
 	return repository.UpdateUserParams{
-		Email:       rq.Email,
-		PhoneNumber: rq.PhoneNumber,
-		FirstName:   rq.FirstName,
-		LastName:    rq.LastName,
-		Role:        rq.Role,
-		UpdatedAt:   rq.UpdatedAt,
-		ID:          rq.ID,
+		Email:       *rq.Email,
+		PhoneNumber: *rq.PhoneNumber,
+		FirstName:   *rq.FirstName,
+		LastName:    *rq.LastName,
+		Role:        *rq.Role,
+		ID:          id,
 	}
 }
 

@@ -14,32 +14,32 @@ order by id;
 
 -- name: UpdateUser :exec
 UPDATE users
-SET email = $1, phone_number = $2, first_name = $3, last_name = $4, role = $5, updated_at = $6
-WHERE id = $7;
+SET email = $1, phone_number = $2, first_name = $3, last_name = $4, role = $5, updated_at = NOW()
+WHERE id = $6;
 
 -- name: UpdateUserEmail :exec
 UPDATE users
-set email = $1
+set email = $1, updated_at = NOW()
 where id = $2;
 
 -- name: UpdateUserPhoneNumber :exec
 UPDATE users
-set phone_number = $1
+set phone_number = $1, updated_at = NOW()
 WHERE id = $2;
 
 -- name: UpdateUserName :exec
 UPDATE users
-set first_name = $1, last_name = $2
+set first_name = $1, last_name = $2, updated_at = NOW()
 WHERE id = $3;
 
 -- name: UpdateUserRole :exec
 UPDATE users
-set role = $1
+set role = $1, updated_at = NOW()
 WHERE id = $2;
 
 -- name: UpdateUserPassword :exec
 UPDATE users
-SET password_hash = $1, updated_at = $2
+SET password_hash = $1, updated_at = $2, updated_at = NOW()
 WHERE id = $3;
 
 -- name: DeleteUser :exec

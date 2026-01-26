@@ -39,7 +39,7 @@ func (h *Handler) ListTeams(c *gin.Context) {
 // GetTeam handles GET requests for a single team by ID
 // TODO: Update this to handle optional query param include (to include players, games, etc.)
 func (h *Handler) GetTeam(c *gin.Context) {
-	teamID, err := getIntFromQuery("id", c) // TODO: update this to use Param instead of query.
+	teamID, err := getIntQueryParam("id", c) // TODO: update this to use Param instead of query.
 	if err != nil {
 		if errors.Is(err, ErrParamEmpty) {
 			slog.Error(err.Error())
@@ -113,7 +113,7 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 		return
 	}
 
-	teamId, err := getIntFromQuery("id", c)
+	teamId, err := getIntQueryParam("id", c)
 	if err != nil {
 		if errors.Is(err, ErrParamEmpty) {
 			slog.Error(err.Error())
@@ -144,7 +144,7 @@ func (h *Handler) UpdateTeam(c *gin.Context) {
 
 // DeleteTeam handles DELETE requests to delete a team
 func (h *Handler) DeleteTeam(c *gin.Context) {
-	teamID, err := getIntFromQuery("id", c)
+	teamID, err := getIntQueryParam("id", c)
 	if err != nil {
 		if errors.Is(err, ErrParamEmpty) {
 			slog.Error(err.Error())
@@ -173,7 +173,7 @@ func (h *Handler) DeleteTeam(c *gin.Context) {
 
 // GetTeamWithPlayers handles GET requests for team with its players
 func (h *Handler) GetTeamWithPlayers(c *gin.Context) {
-	teamID, err := getIntFromQuery("id", c)
+	teamID, err := getIntQueryParam("id", c)
 	if err != nil {
 		if errors.Is(err, ErrParamEmpty) {
 			slog.Error(err.Error())

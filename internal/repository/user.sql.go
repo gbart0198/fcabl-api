@@ -210,25 +210,24 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
-SET email = $1, phone_number = $2, first_name = $3, last_name = $4, role = $5, updated_at = $6
-WHERE id = $7
+SET email = $1, phone_number = $2, first_name = $3, last_name = $4, role = $5, updated_at = NOW()
+WHERE id = $6
 `
 
 type UpdateUserParams struct {
-	Email       string           `json:"email"`
-	PhoneNumber string           `json:"phoneNumber"`
-	FirstName   string           `json:"firstName"`
-	LastName    string           `json:"lastName"`
-	Role        string           `json:"role"`
-	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
-	ID          int64            `json:"id"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phoneNumber"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+	Role        string `json:"role"`
+	ID          int64  `json:"id"`
 }
 
 // UpdateUser
 //
 //	UPDATE users
-//	SET email = $1, phone_number = $2, first_name = $3, last_name = $4, role = $5, updated_at = $6
-//	WHERE id = $7
+//	SET email = $1, phone_number = $2, first_name = $3, last_name = $4, role = $5, updated_at = NOW()
+//	WHERE id = $6
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.Exec(ctx, updateUser,
 		arg.Email,
@@ -236,7 +235,6 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.FirstName,
 		arg.LastName,
 		arg.Role,
-		arg.UpdatedAt,
 		arg.ID,
 	)
 	return err
@@ -244,7 +242,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 
 const updateUserEmail = `-- name: UpdateUserEmail :exec
 UPDATE users
-set email = $1
+set email = $1, updated_at = NOW()
 where id = $2
 `
 
@@ -256,7 +254,7 @@ type UpdateUserEmailParams struct {
 // UpdateUserEmail
 //
 //	UPDATE users
-//	set email = $1
+//	set email = $1, updated_at = NOW()
 //	where id = $2
 func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
 	_, err := q.db.Exec(ctx, updateUserEmail, arg.Email, arg.ID)
@@ -265,7 +263,7 @@ func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams
 
 const updateUserName = `-- name: UpdateUserName :exec
 UPDATE users
-set first_name = $1, last_name = $2
+set first_name = $1, last_name = $2, updated_at = NOW()
 WHERE id = $3
 `
 
@@ -278,7 +276,7 @@ type UpdateUserNameParams struct {
 // UpdateUserName
 //
 //	UPDATE users
-//	set first_name = $1, last_name = $2
+//	set first_name = $1, last_name = $2, updated_at = NOW()
 //	WHERE id = $3
 func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) error {
 	_, err := q.db.Exec(ctx, updateUserName, arg.FirstName, arg.LastName, arg.ID)
@@ -287,7 +285,7 @@ func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) 
 
 const updateUserPassword = `-- name: UpdateUserPassword :exec
 UPDATE users
-SET password_hash = $1, updated_at = $2
+SET password_hash = $1, updated_at = $2, updated_at = NOW()
 WHERE id = $3
 `
 
@@ -300,7 +298,7 @@ type UpdateUserPasswordParams struct {
 // UpdateUserPassword
 //
 //	UPDATE users
-//	SET password_hash = $1, updated_at = $2
+//	SET password_hash = $1, updated_at = $2, updated_at = NOW()
 //	WHERE id = $3
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
 	_, err := q.db.Exec(ctx, updateUserPassword, arg.PasswordHash, arg.UpdatedAt, arg.ID)
@@ -309,7 +307,7 @@ func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPassword
 
 const updateUserPhoneNumber = `-- name: UpdateUserPhoneNumber :exec
 UPDATE users
-set phone_number = $1
+set phone_number = $1, updated_at = NOW()
 WHERE id = $2
 `
 
@@ -321,7 +319,7 @@ type UpdateUserPhoneNumberParams struct {
 // UpdateUserPhoneNumber
 //
 //	UPDATE users
-//	set phone_number = $1
+//	set phone_number = $1, updated_at = NOW()
 //	WHERE id = $2
 func (q *Queries) UpdateUserPhoneNumber(ctx context.Context, arg UpdateUserPhoneNumberParams) error {
 	_, err := q.db.Exec(ctx, updateUserPhoneNumber, arg.PhoneNumber, arg.ID)
@@ -330,7 +328,7 @@ func (q *Queries) UpdateUserPhoneNumber(ctx context.Context, arg UpdateUserPhone
 
 const updateUserRole = `-- name: UpdateUserRole :exec
 UPDATE users
-set role = $1
+set role = $1, updated_at = NOW()
 WHERE id = $2
 `
 
@@ -342,7 +340,7 @@ type UpdateUserRoleParams struct {
 // UpdateUserRole
 //
 //	UPDATE users
-//	set role = $1
+//	set role = $1, updated_at = NOW()
 //	WHERE id = $2
 func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error {
 	_, err := q.db.Exec(ctx, updateUserRole, arg.Role, arg.ID)

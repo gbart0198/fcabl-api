@@ -14,18 +14,34 @@ var (
 	ErrParamParse = errors.New("failed to parse query parameter")
 )
 
-func getIntFromQuery(paramName string, c *gin.Context) (int64, error) {
-	paramValue := c.Query(paramName)
-	slog.Info("Starting GetTeamWithPlayers", "teamIdStr", paramValue)
+func getIntQueryParam(paramName string, c *gin.Context) (int64, error) {
+	stringValue := c.Query(paramName)
+	slog.Info("Starting GetTeamWithPlayers", "teamIdStr", stringValue)
 
-	if paramValue == "" {
+	if stringValue == "" {
 		return 0, fmt.Errorf("%w: parameter '%s' is empty", ErrParamEmpty, paramName)
 	}
 
-	intValue, err := strconv.ParseInt(paramValue, 10, 64)
+	value, err := strconv.ParseInt(stringValue, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("%w: parameter '%s' value '%s' is not a valid integer.", ErrParamParse, paramName, paramValue)
+		return 0, fmt.Errorf("%w: parameter '%s' value '%s' is not a valid integer.", ErrParamParse, paramName, stringValue)
 	}
 
-	return intValue, nil
+	return value, nil
+}
+
+func getIntPathParam(paramName string, c *gin.Context) (int64, error) {
+	stringValue := c.Param(paramName)
+
+	if stringValue == "" {
+		return 0, fmt.Errorf("%w: parameter '%s' is empty", ErrParamEmpty, paramName)
+	}
+	value, err := strconv.ParseInt(stringValue, 10, 64)
+
+	if err != nil {
+		return 0, fmt.Errorf("%w: parameter '%s' value '%s' is not a valid integer.",
+			ErrParamParse, paramName, stringValue)
+	}
+
+	return value, nil
 }
