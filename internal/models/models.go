@@ -285,3 +285,7 @@ type PlayerGameStats struct {
 	Number          pgtype.Int4 `json:"number"`
 	Score           int32       `json:"score"`
 }
+
+type GameOptionsParams struct {
+	Includes string `json:"includes"`
+}
