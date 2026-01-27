@@ -77,7 +77,7 @@ func SetupRouter(h *handlers.Handler, frontendURL string, jwtService *auth.JWTSe
 			adminUserGroup := admin.Group("/user")
 			{
 				adminUserGroup.GET("/:id", h.GetUser)
-				adminUserGroup.GET("/", h.ListUsers)
+				adminUserGroup.GET("/", h.GetUsers)
 				adminUserGroup.POST("/", h.CreateUser)
 				adminUserGroup.PATCH("/:id", h.PartialUpdateUser)
 				adminUserGroup.DELETE("/:id", h.DeleteUser)

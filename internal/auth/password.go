@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,4 +28,12 @@ func GenerateResetToken() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func VerifyPasswordStrength(password string) error {
+	if len(password) < 8 {
+		return errors.New("password must be at least 8 characters")
+		// TODO: add more checks
+	}
+	return nil
 }

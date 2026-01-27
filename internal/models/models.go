@@ -7,12 +7,12 @@ import (
 )
 
 type CreateUserRequest struct {
-	Email       string `json:"email" binding:"required"`
-	PhoneNumber string `json:"phoneNumber" binding:"required"`
-	Password    string `json:"password" binding:"required"`
-	FirstName   string `json:"firstName" binding:"required"`
-	LastName    string `json:"lastName" binding:"required"`
-	Role        string `json:"role" binding:"required"`
+	Email       string `json:"email" binding:"required,email"`
+	PhoneNumber string `json:"phoneNumber" binding:"required,e164"`
+	FirstName   string `json:"firstName" binding:"required,min=1"`
+	LastName    string `json:"lastName" binding:"required,min=1"`
+	Role        string `json:"role" binding:"required,oneofci=admin user"`
+	Password    string `json:"password" binding:"required,min=1"`
 }
 
 func (rq *CreateUserRequest) IntoDBModel(passwordHash string) repository.CreateUserParams {
@@ -26,24 +26,21 @@ func (rq *CreateUserRequest) IntoDBModel(passwordHash string) repository.CreateU
 	}
 }
 
-type UpdateUserRequest struct {
-	Email       *string `json:"email,omitempty" binding:"omitempty"`
-	PhoneNumber *string `json:"phoneNumber,omitempty" binding:"omitempty"`
-	FirstName   *string `json:"firstName,omitempty" binding:"omitempty"`
-	LastName    *string `json:"lastName,omitempty" binding:"omitempty"`
-	Role        *string `json:"role,omitempty" binding:"omitempty"`
-	Password    *string `json:"password,omitempty" binding:"omitempty"`
+type PartialUpdateUserRequest struct {
+	Email       *string `json:"email,omitempty" binding:"omitempty,email"`
+	PhoneNumber *string `json:"phoneNumber,omitempty" binding:"omitempty,e164"`
+	FirstName   *string `json:"firstName,omitempty" binding:"omitempty,min=1"`
+	LastName    *string `json:"lastName,omitempty" binding:"omitempty,min=1"`
+	Role        *string `json:"role,omitempty" binding:"omitempty,oneofci=admin user"`
+	Password    *string `json:"password,omitempty" binding:"omitempty,min=1"`
 }
 
-func (rq *UpdateUserRequest) IntoDBModel(id int64) repository.UpdateUserParams {
-	return repository.UpdateUserParams{
-		Email:       *rq.Email,
-		PhoneNumber: *rq.PhoneNumber,
-		FirstName:   *rq.FirstName,
-		LastName:    *rq.LastName,
-		Role:        *rq.Role,
-		ID:          id,
-	}
+type UpdateUserRequest struct {
+	Email       string `json:"email" binding:"required,email"`
+	PhoneNumber string `json:"phoneNumber" binding:"required,e164"`
+	FirstName   string `json:"firstName" binding:"required,min=1"`
+	LastName    string `json:"lastName" binding:"required,min=1"`
+	Role        string `json:"role" binding:"required,oneofci=admin user"`
 }
 
 type CreatePlayerRequest struct {
