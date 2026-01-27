@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gbart/fcabl-api/internal/models"
@@ -15,8 +16,34 @@ import (
 )
 
 // ListGames handles GET requests to list all games
-// TODO: update to handle optional query params for includes (?includes=teams)
 func (h *Handler) ListGames(c *gin.Context) {
+	includes := c.Query("includes")
+	if includes != "" {
+		itemsToInclude := strings.SplitSeq(includes, ",")
+		for item := range itemsToInclude {
+			if item == "teams" {
+				games, err := h.queries.ListGamesWithTeams(c.Request.Context())
+				if err != nil {
+					if err == pgx.ErrNoRows {
+						slog.Warn("No games found.")
+						c.JSON(http.StatusOK, gin.H{
+							"data": []repository.ListGamesWithTeamsRow{},
+						})
+					} else {
+						slog.Error("Failed to fetch games", "error", err)
+						c.JSON(http.StatusInternalServerError, gin.H{
+							"error": "Failed to fetch games",
+						})
+					}
+					return
+				}
+				c.JSON(http.StatusOK, gin.H{
+					"data": games,
+				})
+			}
+		}
+		return
+	}
 	games, err := h.queries.ListGames(c.Request.Context())
 	if err != nil {
 		if err == pgx.ErrNoRows {
