@@ -8,7 +8,8 @@ import (
 	"github.com/gbart/fcabl-api/internal/auth"
 	"github.com/gbart/fcabl-api/internal/config"
 	"github.com/gbart/fcabl-api/internal/db"
-	"github.com/gbart/fcabl-api/internal/handlers"
+	"github.com/gbart/fcabl-api/internal/repository"
+	"github.com/gbart/fcabl-api/internal/service"
 	"github.com/gbart/fcabl-api/router"
 )
 
@@ -45,10 +46,11 @@ func main() {
 	jwtService := auth.NewJWTService(cfg.JWTSecret, cfg.JWTExpirationHours)
 
 	// Initialize handlers
-	handler := handlers.NewHandler(pg, jwtService, cfg)
+	queries := repository.New(pg.DB)
+	container := service.NewContainer(queries, cfg)
 
 	// Setup router
-	r := router.SetupRouter(handler, cfg.FrontendURL, jwtService)
+	r := router.SetupRouter(container, cfg.FrontendURL, jwtService)
 
 	// Start server
 	addr := fmt.Sprintf(":%s", cfg.Port)
