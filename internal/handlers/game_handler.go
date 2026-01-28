@@ -68,24 +68,12 @@ func (h *Handler) ListGames(c *gin.Context) {
 // GetGame handles GET requests for a single game by ID
 // TODO: update to handle optional query params for includes (?includes=teams)
 func (h *Handler) GetGame(c *gin.Context) {
-	gameIDStr := c.Param("id")
-	slog.Info("Starting GetGame", "gameIdStr", gameIDStr)
-
-	if gameIDStr == "" {
-		slog.Warn("Game ID is empty.")
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Please provide a game id.",
-		})
-		return
-	}
-
-	gameID, err := strconv.ParseInt(gameIDStr, 10, 64)
+	gameID, err := getIntPathParam("id", c)
 	if err != nil {
 		slog.Error("Failed to parse game id", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to parse game id. Please provide a valid id.",
+			"error": "Game ID is required.",
 		})
-		return
 	}
 
 	game, err := h.queries.GetGameById(c.Request.Context(), gameID)
