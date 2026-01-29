@@ -8,7 +8,7 @@ import (
 )
 
 type UserService interface {
-	ListUsers(ctx context.Context, includes []string) ([]repository.ListUsersRow, error)
+	ListUsers(ctx context.Context, includes []string) ([]repository.User, error)
 }
 
 type userService struct {
@@ -21,6 +21,6 @@ func NewUserService(repo repository.UserRepository) UserService {
 	}
 }
 
-func (s *userService) ListUsers(ctx context.Context, includes []string) ([]repository.ListUsersRow, error) {
+func (s *userService) ListUsers(ctx context.Context, includes []string) ([]repository.User, error) {
 	return s.repo.ListUsers(ctx)
 }

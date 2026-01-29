@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,23 +14,41 @@ import (
 
 type MockUserRepo struct {
 	// We use fields to store what we want the mock to return
-	mockUsers []repository.ListUsersRow
+	mockUsers []repository.User
 	mockErr   error
 }
 
-func (m *MockUserRepo) ListUsers(ctx context.Context) ([]repository.ListUsersRow, error) {
+func (m *MockUserRepo) ListUsers(ctx context.Context) ([]repository.User, error) {
 	return m.mockUsers, m.mockErr
 }
 
 func TestListUsers_Success(t *testing.T) {
-	// 1. Arrange
-	mockData := []repository.ListUsersRow{
-		{
-			ID:          1,
-			Email:       "test_user@gmail.com",
-			PhoneNumber: "+1234567890",
-			FirstName:   "John",
-			LastName:    "Doe",
+	mockData := createMockUsers(1)
+	mockRepo := &MockUserRepo{mockUsers: mockData, mockErr: nil}
+	svc := NewUserService(mockRepo)
+	ctx := context.Background()
+
+	results, err := svc.ListUsers(ctx, []string{})
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("expected 1 user, got %d", len(results))
+	}
+	if results[0].FirstName != "John1" {
+		t.Errorf("expected username John, got %s", results[0].FirstName)
+	}
+}
+
+func createMockUsers(numUsers int) []repository.User {
+	users := make([]repository.User, numUsers)
+	for i := range numUsers {
+		users[i] = repository.User{
+			ID:          int64(i + 1),
+			Email:       fmt.Sprintf("test_user_%d@gmail.com", i+1),
+			PhoneNumber: fmt.Sprintf("+123456789%d", i+1),
+			FirstName:   fmt.Sprintf("John%d", i+1),
+			LastName:    fmt.Sprintf("Doe%d", i+1),
 			Role:        "admin",
 			CreatedAt: pgtype.Timestamp{
 				Time:  time.Now(),
@@ -39,25 +58,7 @@ func TestListUsers_Success(t *testing.T) {
 				Time:  time.Now(),
 				Valid: true,
 			},
-		},
+		}
 	}
-	mockRepo := &MockUserRepo{mockUsers: mockData, mockErr: nil}
-
-	// Inject mock into the real service
-	svc := NewUserService(mockRepo)
-
-	// 2. Act
-	ctx := context.Background()
-	results, err := svc.ListUsers(ctx, []string{})
-
-	// 3. Assert
-	if err != nil {
-		t.Errorf("expected no error, got %v", err)
-	}
-	if len(results) != 1 {
-		t.Errorf("expected 1 user, got %d", len(results))
-	}
-	if results[0].FirstName != "John" {
-		t.Errorf("expected username John, got %s", results[0].FirstName)
-	}
+	return users
 }

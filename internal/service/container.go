@@ -16,11 +16,11 @@ type Container struct {
 
 func NewContainer(repo *repository.Queries, cfg *config.Config) *Container {
 	return &Container{
-		User:       NewUserService(repo),
-		Game:       NewGameService(repo),
-		Team:       NewTeamService(repo),
-		Player:     NewPlayerService(repo),
-		GameDetail: NewGameDetailService(repo),
-		Payment:    NewPaymentService(repo),
+		User:       NewUserService(repository.NewUserRepository(repo)),
+		Game:       NewGameService(repository.NewGameRepository(repo)),
+		Team:       NewTeamService(repository.NewTeamRepository(repo)),
+		Player:     NewPlayerService(repository.NewPlayerRepository(repo)),
+		GameDetail: NewGameDetailService(repository.NewGameDetailRepository(repo)),
+		Payment:    NewPaymentService(repository.NewPaymentRepository(repo)),
 	}
 }
